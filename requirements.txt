@@ -13,3 +13,6 @@ yfinance
 tqdm
 transformers
 torch
+sentence-transformers
+faiss-cpu
+umap-learn
