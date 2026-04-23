@@ -11,3 +11,5 @@ arch
 scipy
 yfinance
 tqdm
+transformers
+torch
