@@ -1,0 +1,24 @@
+# Jupyter
+.ipynb_checkpoints/
+*.pyc
+__pycache__/
+
+# Data (large files)
+data/raw/*.csv
+data/processed/*.csv
+data/processed/*.pkl
+data/processed/*.npy
+data/processed/*.bin
+
+# Keep these small files
+!data/raw/sector_map.json
+
+# Environment
+.env
+*.env
+venv/
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
