@@ -222,3 +222,69 @@ def load_graph_intelligence() -> pd.DataFrame:
     p = _require(PROC / 'graph_intelligence.csv',
                  producer_nb='NB05_graph_analysis')
     return pd.read_csv(p)
+
+
+def load_ml_signals() -> pd.DataFrame:
+    return _load_long_csv(PROC / 'ml_signals.csv',
+                          producer_nb='NB06_ml_models', name='ml_signals')
+
+
+def load_models() -> tuple:
+    """Returns (model_direction, model_volatility, model_regime). Producer: NB06."""
+    paths = [PROC / f'model_{kind}.pkl' for kind in ('direction', 'volatility', 'regime')]
+    for p in paths:
+        _require(p, producer_nb='NB06_ml_models')
+    return tuple(joblib.load(p) for p in paths)
+
+
+def load_master_signals() -> pd.DataFrame:
+    return _load_long_csv(
+        PROC / 'master_signals.csv',
+        producer_nb='NB07_ml_analysis', name='master_signals',
+        required_cols=['alpha_signal'],
+    )
+
+
+def load_signal_explanations() -> dict:
+    p = _require(PROC / 'signal_explanations.json',
+                 producer_nb='NB07_ml_analysis')
+    with open(p, encoding='utf-8') as f:
+        return json.load(f)
+
+
+def load_synthetic_news() -> pd.DataFrame:
+    p = _require(RAW / 'synthetic_news.csv', producer_nb='NB08_nlp_sentiment')
+    # parse_dates only if Date column exists (handles both schemas)
+    df = pd.read_csv(p)
+    date_col = next((c for c in df.columns if c.lower() == 'date'), None)
+    if date_col:
+        df[date_col] = pd.to_datetime(df[date_col]).dt.normalize()
+        if date_col != 'Date':
+            df = df.rename(columns={date_col: 'Date'})
+    return df
+
+
+def load_sentiment_features() -> pd.DataFrame:
+    return _load_long_csv(PROC / 'sentiment_features.csv',
+                          producer_nb='NB08_nlp_sentiment', name='sentiment_features')
+
+
+def load_embeddings() -> np.ndarray:
+    p = _require(PROC / 'embeddings.npy', producer_nb='NB09_rag_setup')
+    arr = np.load(p)
+    if arr.ndim != 2:
+        raise PipelineDataError(f"embeddings.npy: expected 2D, got {arr.shape}")
+    return arr
+
+
+def load_faiss_index():
+    """Returns a faiss.Index instance. Producer: NB09."""
+    import faiss
+    p = _require(PROC / 'faiss_index.bin', producer_nb='NB09_rag_setup')
+    return faiss.read_index(str(p))
+
+
+def load_rag_documents() -> list[dict]:
+    p = _require(PROC / 'rag_documents.json', producer_nb='NB09_rag_setup')
+    with open(p, encoding='utf-8') as f:
+        return json.load(f)
