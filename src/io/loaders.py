@@ -5,7 +5,12 @@ Every loader validates schema and raises PipelineDataError on missing/malformed
 inputs, with a message naming the producer notebook.
 """
 from __future__ import annotations
+
+import json
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
 
 
 class PipelineDataError(FileNotFoundError):
@@ -27,8 +32,6 @@ PROJECT_ROOT = _find_project_root()
 RAW = PROJECT_ROOT / 'data' / 'raw'
 PROC = PROJECT_ROOT / 'data' / 'processed'
 OUTPUTS = PROJECT_ROOT / 'data' / 'outputs'
-
-import pandas as pd
 
 
 def _require(path: Path, *, producer_nb: str) -> Path:
@@ -67,10 +70,6 @@ def _validate(
     return df
 
 
-import json
-import numpy as np
-
-
 def load_prices() -> pd.DataFrame:
     """Daily close prices, wide format (Date index, ticker columns). Producer: NB01."""
     p = _require(RAW / 'prices.csv', producer_nb='NB01_data_pipeline')
@@ -90,7 +89,7 @@ def load_macro() -> pd.DataFrame:
 def load_sector_map() -> dict[str, str]:
     """Ticker → GICS sector. Producer: NB01."""
     p = _require(RAW / 'sector_map.json', producer_nb='NB01_data_pipeline')
-    with open(p) as f:
+    with open(p, encoding='utf-8') as f:
         sm = json.load(f)
     if not isinstance(sm, dict):
         raise PipelineDataError(f"sector_map.json: expected dict, got {type(sm)}")
