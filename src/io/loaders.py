@@ -145,3 +145,79 @@ def load_feature_scaler():
     p = _require(PROC / 'feature_scaler.pkl',
                  producer_nb='NB02_data_processing')
     return joblib.load(p)
+
+
+def load_risk_metrics() -> pd.DataFrame:
+    return _load_long_csv(PROC / 'risk_metrics.csv',
+                          producer_nb='NB03_quant_core', name='risk_metrics')
+
+
+def load_regimes() -> pd.DataFrame:
+    return _load_wide_csv(PROC / 'regimes.csv',
+                          producer_nb='NB03_quant_core', name='regimes')
+
+
+def load_mst_edges() -> pd.DataFrame:
+    p = _require(PROC / 'mst_edges.csv', producer_nb='NB04_graph_engine')
+    return pd.read_csv(p)
+
+
+def load_dynamic_graph_metrics() -> pd.DataFrame:
+    p = _require(PROC / 'dynamic_graph_metrics.csv',
+                 producer_nb='NB04_graph_engine')
+    df = pd.read_csv(p)
+    # Normalise date column name to 'Date' regardless of case in file
+    date_col = next((c for c in df.columns if c.lower() == 'date'), None)
+    if date_col is None:
+        raise PipelineDataError(
+            "dynamic_graph_metrics: no date column found. "
+            f"Got columns: {list(df.columns)}"
+        )
+    if date_col != 'Date':
+        df = df.rename(columns={date_col: 'Date'})
+    df['Date'] = pd.to_datetime(df['Date']).dt.normalize()
+    df = df.set_index('Date')
+    df.index.name = 'Date'
+    return df
+
+
+def load_centrality_scores() -> pd.DataFrame:
+    p = _require(PROC / 'centrality_scores.csv',
+                 producer_nb='NB05_graph_analysis')
+    return pd.read_csv(p)
+
+
+def load_community_assignments() -> pd.DataFrame:
+    p = _require(PROC / 'community_assignments.csv',
+                 producer_nb='NB05_graph_analysis')
+    return pd.read_csv(p)
+
+
+def load_systemic_risk_scores() -> pd.DataFrame:
+    return _load_wide_csv(PROC / 'systemic_risk_scores.csv',
+                          producer_nb='NB05_graph_analysis',
+                          name='systemic_risk_scores')
+
+
+def load_features_with_graph() -> pd.DataFrame:
+    return _load_long_csv(PROC / 'features_with_graph.csv',
+                          producer_nb='NB05_graph_analysis',
+                          name='features_with_graph')
+
+
+def load_granger_causality() -> pd.DataFrame:
+    p = _require(PROC / 'granger_causality.csv',
+                 producer_nb='NB05_graph_analysis')
+    return pd.read_csv(p)
+
+
+def load_leader_follower() -> pd.DataFrame:
+    p = _require(PROC / 'leader_follower.csv',
+                 producer_nb='NB05_graph_analysis')
+    return pd.read_csv(p)
+
+
+def load_graph_intelligence() -> pd.DataFrame:
+    p = _require(PROC / 'graph_intelligence.csv',
+                 producer_nb='NB05_graph_analysis')
+    return pd.read_csv(p)

@@ -1,0 +1,46 @@
+import pytest
+import pandas as pd
+from src.io.loaders import (
+    load_risk_metrics, load_regimes,
+    load_mst_edges, load_dynamic_graph_metrics,
+    load_centrality_scores, load_community_assignments,
+    load_systemic_risk_scores, load_features_with_graph,
+    load_granger_causality, load_leader_follower, load_graph_intelligence,
+)
+
+
+@pytest.mark.xfail(
+    reason="Schema drift: risk_metrics.csv is a per-ticker summary (no Date/ticker columns). "
+           "Will be fixed in Task 16/17/18 when NB03_quant_core is rewritten.",
+    strict=True,
+)
+def test_load_risk_metrics_has_date_and_ticker():
+    df = load_risk_metrics()
+    assert 'Date' in df.columns or df.index.name == 'Date'
+
+
+def test_load_regimes_has_date_index_or_column():
+    df = load_regimes()
+    assert df.index.name == 'Date' or 'Date' in df.columns
+
+
+def test_load_mst_edges_returns_dataframe():
+    df = load_mst_edges()
+    assert isinstance(df, pd.DataFrame)
+    assert len(df) > 0
+
+
+def test_load_dynamic_graph_metrics_has_date_index():
+    df = load_dynamic_graph_metrics()
+    assert df.index.name == 'Date'
+
+
+def test_load_centrality_scores_returns_dataframe():
+    df = load_centrality_scores()
+    assert isinstance(df, pd.DataFrame)
+
+
+def test_load_features_with_graph_long_format():
+    df = load_features_with_graph()
+    assert 'Date' in df.columns
+    assert 'ticker' in df.columns
