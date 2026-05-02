@@ -44,3 +44,34 @@ def test_load_features_with_graph_long_format():
     df = load_features_with_graph()
     assert 'Date' in df.columns
     assert 'ticker' in df.columns
+
+
+def test_load_community_assignments_smoke():
+    df = load_community_assignments()
+    assert isinstance(df, pd.DataFrame)
+    assert len(df) > 0
+
+
+def test_load_systemic_risk_scores_smoke():
+    df = load_systemic_risk_scores()
+    assert isinstance(df, pd.DataFrame)
+    assert df.index.name == 'Date'
+    assert len(df) > 0
+
+
+def test_load_granger_causality_smoke():
+    df = load_granger_causality()
+    assert isinstance(df, pd.DataFrame)
+    assert len(df) > 0
+
+
+def test_load_leader_follower_smoke():
+    df = load_leader_follower()
+    assert isinstance(df, pd.DataFrame)
+    assert len(df) > 0
+
+
+def test_load_graph_intelligence_smoke():
+    df = load_graph_intelligence()
+    assert isinstance(df, pd.DataFrame)
+    assert len(df) > 0
