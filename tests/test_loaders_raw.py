@@ -1,10 +1,8 @@
 import pytest
-import json
 import pandas as pd
-import numpy as np
 from src.io.loaders import (
     load_prices, load_macro, load_sector_map,
-    PipelineDataError, RAW,
+    PipelineDataError,
 )
 
 
