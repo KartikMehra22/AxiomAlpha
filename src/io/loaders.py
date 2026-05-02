@@ -65,3 +65,33 @@ def _validate(
             f"{name}: index is not monotonically increasing"
         )
     return df
+
+
+import json
+import numpy as np
+
+
+def load_prices() -> pd.DataFrame:
+    """Daily close prices, wide format (Date index, ticker columns). Producer: NB01."""
+    p = _require(RAW / 'prices.csv', producer_nb='NB01_data_pipeline')
+    df = pd.read_csv(p, index_col='Date', parse_dates=['Date'])
+    df.index = df.index.normalize()  # date-only, drop tz/time
+    return _validate(df, required_cols=[], name='prices', monotonic_index=True)
+
+
+def load_macro() -> pd.DataFrame:
+    """Daily macro factors (VIX, SP500, TNX). Producer: NB01."""
+    p = _require(RAW / 'macro.csv', producer_nb='NB01_data_pipeline')
+    df = pd.read_csv(p, index_col='Date', parse_dates=['Date'])
+    df.index = df.index.normalize()
+    return _validate(df, required_cols=[], name='macro', monotonic_index=True)
+
+
+def load_sector_map() -> dict[str, str]:
+    """Ticker → GICS sector. Producer: NB01."""
+    p = _require(RAW / 'sector_map.json', producer_nb='NB01_data_pipeline')
+    with open(p) as f:
+        sm = json.load(f)
+    if not isinstance(sm, dict):
+        raise PipelineDataError(f"sector_map.json: expected dict, got {type(sm)}")
+    return sm
