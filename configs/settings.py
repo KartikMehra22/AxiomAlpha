@@ -1,0 +1,68 @@
+"""Centralized configuration for the AxiomAlpha pipeline.
+
+Notebooks import from here instead of hardcoding constants.
+"""
+from pathlib import Path
+
+# --- Paths ---
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DATA_RAW = PROJECT_ROOT / 'data' / 'raw'
+DATA_PROC = PROJECT_ROOT / 'data' / 'processed'
+DATA_OUT = PROJECT_ROOT / 'data' / 'outputs'
+
+# --- Universe (30 tickers) ---
+TICKERS = [
+    'AAPL', 'MSFT', 'NVDA', 'GOOGL', 'META',
+    'JPM', 'BAC', 'GS', 'MS', 'WFC',
+    'JNJ', 'UNH', 'PFE', 'ABBV', 'MRK',
+    'XOM', 'CVX', 'COP', 'SLB', 'EOG',
+    'AMZN', 'TSLA', 'HD', 'MCD', 'NKE',
+    'BA', 'CAT', 'GE', 'MMM', 'UPS',
+]
+
+# --- Date range ---
+START_DATE = '2019-01-01'
+END_DATE = '2024-12-31'
+
+# --- Reproducibility ---
+RANDOM_SEED = 42
+
+# --- Statistical / quant ---
+GARCH_P = 1
+GARCH_Q = 1
+ROLLING_GRAPH_WINDOW = 60
+N_REGIMES = 3  # Bear, Volatile, Bull
+
+# --- Machine Learning ---
+ML_N_SPLITS = 5
+RF_PARAMS = dict(
+    n_estimators=200, max_depth=6, min_samples_leaf=20,
+    random_state=RANDOM_SEED, n_jobs=1,  # n_jobs=1 for determinism
+)
+XGB_PARAMS = dict(
+    n_estimators=200, max_depth=4, learning_rate=0.05,
+    subsample=0.8, colsample_bytree=0.8,
+    random_state=RANDOM_SEED, n_jobs=1, eval_metric='logloss',
+)
+RIDGE_PARAMS = dict(alpha=1.0, random_state=RANDOM_SEED)
+
+# --- NLP ---
+EMBEDDING_MODEL = 'all-MiniLM-L6-v2'  # sentence-transformers
+FINBERT_MODEL = 'ProsusAI/finbert'
+SYNTHETIC_NEWS_N = 1000
+
+# --- Optimization ---
+OPT_RISK_AVERSION = 2.0
+OPT_MAX_WEIGHT = 0.10
+OPT_LONG_ONLY = True
+CVAR_ALPHA = 0.95
+COVAR_SHRINKAGE = 'ledoit_wolf'
+
+# --- Backtest ---
+BACKTEST_REBALANCE = 'M'  # monthly
+TRANSACTION_COST_BPS = 5
+INITIAL_CAPITAL = 1_000_000
+
+# --- Visualization ---
+DARK_BG = '#0d0d0d'
+COLORS = ['#00D4FF', '#FF6B6B', '#51CF66', '#FFD43B', '#FF922B', '#888888']
