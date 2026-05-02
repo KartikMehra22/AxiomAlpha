@@ -7,6 +7,7 @@ inputs, with a message naming the producer notebook.
 from __future__ import annotations
 
 import json
+import joblib
 from pathlib import Path
 
 import numpy as np
@@ -94,3 +95,53 @@ def load_sector_map() -> dict[str, str]:
     if not isinstance(sm, dict):
         raise PipelineDataError(f"sector_map.json: expected dict, got {type(sm)}")
     return sm
+
+
+def _load_wide_csv(path: Path, *, producer_nb: str, name: str) -> pd.DataFrame:
+    """Wide-format CSV: Date as index, no other index columns."""
+    p = _require(path, producer_nb=producer_nb)
+    df = pd.read_csv(p, index_col='Date', parse_dates=['Date'])
+    df.index = df.index.normalize()
+    return _validate(df, required_cols=[], name=name, monotonic_index=True)
+
+
+def _load_long_csv(
+    path: Path, *, producer_nb: str, name: str,
+    required_cols: list[str] | None = None,
+) -> pd.DataFrame:
+    """Long-format CSV: Date and ticker as columns (not index)."""
+    p = _require(path, producer_nb=producer_nb)
+    df = pd.read_csv(p, parse_dates=['Date'])
+    df['Date'] = df['Date'].dt.normalize()
+    return _validate(
+        df,
+        required_cols=['Date', 'ticker'] + (required_cols or []),
+        name=name,
+    )
+
+
+def load_log_returns() -> pd.DataFrame:
+    return _load_wide_csv(PROC / 'log_returns.csv',
+                          producer_nb='NB02_data_processing', name='log_returns')
+
+
+def load_simple_returns() -> pd.DataFrame:
+    return _load_wide_csv(PROC / 'simple_returns.csv',
+                          producer_nb='NB02_data_processing', name='simple_returns')
+
+
+def load_features_raw() -> pd.DataFrame:
+    return _load_long_csv(PROC / 'features_raw.csv',
+                          producer_nb='NB02_data_processing', name='features_raw')
+
+
+def load_features_normalized() -> pd.DataFrame:
+    return _load_long_csv(PROC / 'features_normalized.csv',
+                          producer_nb='NB02_data_processing', name='features_normalized')
+
+
+def load_feature_scaler():
+    """Sklearn StandardScaler fitted on training features. Producer: NB02."""
+    p = _require(PROC / 'feature_scaler.pkl',
+                 producer_nb='NB02_data_processing')
+    return joblib.load(p)
