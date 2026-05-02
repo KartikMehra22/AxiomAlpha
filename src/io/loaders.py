@@ -288,3 +288,58 @@ def load_rag_documents() -> list[dict]:
     p = _require(PROC / 'rag_documents.json', producer_nb='NB09_rag_setup')
     with open(p, encoding='utf-8') as f:
         return json.load(f)
+
+
+def load_optimal_weights() -> pd.DataFrame:
+    return _load_long_csv(
+        PROC / 'optimal_weights.csv',
+        producer_nb='NB11_portfolio_optimization', name='optimal_weights',
+        required_cols=['weight'],
+    )
+
+
+def load_equity_curves() -> pd.DataFrame:
+    return _load_wide_csv(PROC / 'equity_curves.csv',
+                          producer_nb='NB12_backtesting', name='equity_curves')
+
+
+def load_performance_metrics() -> dict:
+    p = _require(PROC / 'performance_metrics.csv',
+                 producer_nb='NB12_backtesting')
+    df = pd.read_csv(p)
+    if {'metric', 'value'}.issubset(df.columns):
+        return dict(zip(df['metric'], df['value']))
+    if df.shape[0] == 1:
+        return df.iloc[0].to_dict()
+    return df.to_dict(orient='list')
+
+
+def load_attribution_results() -> pd.DataFrame:
+    p = _require(PROC / 'attribution_results.csv',
+                 producer_nb='NB12_backtesting')
+    return pd.read_csv(p)
+
+
+def load_regime_performance() -> pd.DataFrame:
+    p = _require(PROC / 'regime_performance.csv',
+                 producer_nb='NB12_backtesting')
+    return pd.read_csv(p)
+
+
+def load_backtest_results() -> pd.DataFrame:
+    p = _require(PROC / 'backtest_results.csv',
+                 producer_nb='NB12_backtesting')
+    df = pd.read_csv(p)
+    date_col = next((c for c in df.columns if c.lower() == 'date'), None)
+    if date_col:
+        df[date_col] = pd.to_datetime(df[date_col]).dt.normalize()
+        if date_col != 'Date':
+            df = df.rename(columns={date_col: 'Date'})
+    return df
+
+
+def load_pipeline_output() -> dict:
+    p = _require(PROC / 'pipeline_output.json',
+                 producer_nb='NB14_agent_orchestration')
+    with open(p, encoding='utf-8') as f:
+        return json.load(f)
