@@ -27,3 +27,41 @@ PROJECT_ROOT = _find_project_root()
 RAW = PROJECT_ROOT / 'data' / 'raw'
 PROC = PROJECT_ROOT / 'data' / 'processed'
 OUTPUTS = PROJECT_ROOT / 'data' / 'outputs'
+
+import pandas as pd
+
+
+def _require(path: Path, *, producer_nb: str) -> Path:
+    """Return path if it exists, else raise PipelineDataError naming producer."""
+    if not path.exists():
+        raise PipelineDataError(
+            f"Missing pipeline artifact: {path.name}\n"
+            f"  Expected at: {path}\n"
+            f"  Producer:    {producer_nb}\n"
+            f"  Fix: run {producer_nb} first (or `python run_all.py`)."
+        )
+    return path
+
+
+def _validate(
+    df: pd.DataFrame,
+    *,
+    required_cols: list[str],
+    name: str,
+    monotonic_index: bool = False,
+) -> pd.DataFrame:
+    """Schema validation; raises PipelineDataError on failure."""
+    have = set(df.columns)
+    if df.index.name:
+        have.add(df.index.name)
+    missing = set(required_cols) - have
+    if missing:
+        raise PipelineDataError(
+            f"{name}: missing columns {sorted(missing)}. "
+            f"Got columns: {list(df.columns)}, index: {df.index.name}"
+        )
+    if monotonic_index and not df.index.is_monotonic_increasing:
+        raise PipelineDataError(
+            f"{name}: index is not monotonically increasing"
+        )
+    return df
