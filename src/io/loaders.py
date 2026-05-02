@@ -166,7 +166,8 @@ def load_dynamic_graph_metrics() -> pd.DataFrame:
     p = _require(PROC / 'dynamic_graph_metrics.csv',
                  producer_nb='NB04_graph_engine')
     df = pd.read_csv(p)
-    # Normalise date column name to 'Date' regardless of case in file
+    # TODO(Task 17): NB04 will emit 'Date' (capitalized) — remove the
+    # case-insensitive rename below once that lands.
     date_col = next((c for c in df.columns if c.lower() == 'date'), None)
     if date_col is None:
         raise PipelineDataError(
