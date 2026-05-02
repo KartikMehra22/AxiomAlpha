@@ -42,3 +42,7 @@ anthropic>=0.18.0
 
 # Utilities
 tqdm>=4.64.0
+
+# Testing & Orchestration
+pytest>=7.4.0
+papermill>=2.5.0
