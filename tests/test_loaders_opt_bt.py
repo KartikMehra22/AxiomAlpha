@@ -7,10 +7,6 @@ from src.io.loaders import (
 )
 
 
-@pytest.mark.xfail(
-    reason="optimal_weights.csv not yet produced; fix in Task 24/25/27 (NB11)",
-    strict=False,
-)
 def test_load_optimal_weights_long_format():
     df = load_optimal_weights()
     assert 'Date' in df.columns and 'ticker' in df.columns
@@ -28,10 +24,6 @@ def test_load_performance_metrics_returns_dict():
     assert 'sharpe' in m or 'Sharpe' in m
 
 
-@pytest.mark.xfail(
-    reason="pipeline_output.json not yet produced; fix in Task 24/25/27 (NB14)",
-    strict=False,
-)
 def test_load_pipeline_output_returns_dict():
     out = load_pipeline_output()
     assert isinstance(out, dict)
