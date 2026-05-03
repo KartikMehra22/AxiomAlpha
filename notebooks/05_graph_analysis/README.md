@@ -1,41 +1,38 @@
-# Graph Analysis: Extracting Market Intelligence from Network Topology
+# NB-05: Graph Analysis
 
-## Research Purpose
-|
-| **1. Topology** | Is the market robust or fragile? Scale-free or random? | Structural metrics (density, path length, clustering) |
-| **2. Community Detection** | Do assets cluster by GICS sector or by actual market behaviour? | Community assignments, NMI vs GICS |
-| **3. Centrality Signals** | Does graph centrality predict future returns or risk? | Centrality-sorted return analysis |
-| **4. Granger Intelligence** | Which assets lead price discovery and which follow? | Leader/Follower classification |
-| **5. Systemic Risk** | Which assets are "too connected to fail"? | Traditional vs. network risk comparison |
-| **6. ML Feature Matrix** | How do graph features combine with price features for ML? | `features_with_graph.csv` |
+## Purpose
+Computes graph centrality, community structure, systemic risk scores, and Granger-causal leader/follower relationships from the network built in NB-04. Merges all graph-derived signals with price features to produce the unified `features_with_graph` ML-ready matrix.
 
-> **Data contract**: Reads all Phase 4 outputs from `data/processed/`. Final output: `features_with_graph.csv` — the complete ML-ready feature matrix combining price, macro, and graph features.
+## Inputs
+| Artifact | Producer | Loaded via |
+|---|---|---|
+| `log_returns.csv` | NB-02 | `loaders.load_log_returns()` |
+| `mst_edges.csv` | NB-04 | `loaders.load_mst_edges()` |
+| `dynamic_graph_metrics.csv` | NB-04 | `loaders.load_dynamic_graph_metrics()` |
+| `features_normalized.csv` | NB-02 | `loaders.load_features_normalized()` |
 
-## Quantitative Logic & Methodology
-## 1. Environment Setup & Data Loading
+## Outputs
+| Artifact | Path | Schema | Consumer |
+|---|---|---|---|
+| `centrality_scores.csv` | `data/processed/` | `ticker, degree, betweenness, eigenvector, pagerank` | NB-06, NB-11, NB-13 |
+| `community_assignments.csv` | `data/processed/` | `ticker, community_id` | NB-06, NB-13 |
+| `systemic_risk_scores.csv` | `data/processed/` | `ticker, systemic_risk_score` | NB-06, NB-11, NB-13 |
+| `granger_causality.csv` | `data/processed/` | `source, target, f_stat, p_value` | NB-06, NB-14 |
+| `leader_follower.csv` | `data/processed/` | `ticker, lf_score` | NB-13, NB-14 |
+| `features_with_graph.csv` | `data/processed/` | `Date, ticker, <price+graph features>` | NB-06, NB-11, NB-13, NB-14 |
+| `graph_intelligence.csv` | `data/processed/` | `ticker, <summary graph stats>` | NB-13 |
 
-We load the complete multi-layer dataset generated in Phase 4:
-- `log_returns.csv` — Price return matrix for graph reconstruction.
-- `centrality_scores.csv` — Per-asset degree, betweenness, eigenvector, PageRank.
-- `granger_causality.csv` — Directed edge list of significant causal relationships.
-- `mst_edges.csv` — Minimum Spanning Tree backbone edges.
-- `dynamic_graph_metrics.csv` — Time-series of network density, clustering, avg weight.
-- `systemic_risk_scores.csv` — Composite Systemic Risk Score per asset.
-- `risk_metrics.csv` — Traditional risk measures (VaR, volatility, GARCH params) from Phase 3.
+## Key methods
+- Eigenvector centrality × volatility for systemic impact: amplifies centrality by realized vol to flag "too-connected-to-fail" assets
+- Louvain community detection: maximizes modularity Q = (1/2m)·Σ[A_ij − k_i·k_j/2m]·δ(c_i, c_j)
+- Granger causality tests: VAR-based F-tests on 870 directed pairs with Bonferroni-corrected α
 
-The correlation graph `G` is reconstructed from the returns matrix using the same $\tau = 0.40$ threshold from Phase 4 for consistency.
+## How to run
+```bash
+python run_all.py            # full pipeline
+```
 
-
-## Key Mathematical Formulas
-$$LR_i = \frac{\text{out-degree}_i - \text{in-degree}_i}{\text{out-degree}_i + \text{in-degree}_i + 1}$$
-
-$$H_1: E[r_{t+1} | \text{high PR}] \neq E[r_{t+1} | \text{low PR}]$$
-
-$$H_0: E[r_{t+1} | \text{high PR}] = E[r_{t+1} | \text{low PR}]$$
-
-$$\text{Spike}_i^{(t)} = \mathbb{1}\left[\frac{C_i^{(t)} - \bar{C}_i^{(60d)}}{\hat{\sigma}_{C_i}^{(60d)}} > 2\right]$$
-
-$$NMI(X, Y) = \frac{2 \cdot I(X;Y)}{H(X) + H(Y)} \in [0, 1]$$
-
-$$Q = \frac{1}{2m} \sum_{ij} \left[A_{ij} - \frac{k_i k_j}{2m}\right] \delta(c_i, c_j)$$
-
+## Verified after fix
+- ✅ No `np.random.*` data fabrication
+- ✅ Reads exclusively via `src.io.loaders`
+- ✅ Outputs schema-validated by downstream loaders

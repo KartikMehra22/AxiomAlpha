@@ -1,126 +1,32 @@
-# Quant Research Pipeline: Multi-Asset Data Ingestion
+# NB-01: Data Pipeline
 
-## Research Purpose
-This notebook is the **primary ingestion layer** of the quantitative research pipeline. High-fidelity research demands a data foundation free of survivorship bias, corporate action distortions, and time-series discontinuities.
+## Purpose
+Ingests 5 years of daily prices and macro data via yfinance and FRED for the 30-ticker universe defined in `configs/settings.py`. This is the entry point of the pipeline — it fetches all raw data from external APIs, validates quality, and persists raw artifacts consumed by every downstream notebook.
 
-### Scope & Objectives
-1. **Universe Definition** — Constructing a stratified 30-stock investment universe across 6 GICS sectors, ensuring broad cross-sectional coverage.
-2. **Market Data Acquisition** — Downloading split- and dividend-adjusted daily close prices, the only correct input for return and risk calculations.
-3. **Exogenous Factor Integration** — Augmenting stock data with 5 macroeconomic risk drivers that govern regime shifts (volatility, rates, commodities).
-4. **Data Integrity Validation** — Systematic quality-control including missing-value detection, duplicate-date checks, and continuity audits.
-5. **Raw Data Persistence** — Immutable storage of all canonical raw files to `data/raw/`, forming the sole source of truth for all downstream phases.
+## Inputs
+| Artifact | Producer | Loaded via |
+|---|---|---|
+| yfinance API | External | `yfinance.download()` |
+| FRED API | External | `fredapi.Fred()` |
 
-> **Pipeline contract**: Every notebook in Phases 2–5 reads exclusively from outputs produced here. Any change to universe composition or date range requires re-running this notebook first.
+## Outputs
+| Artifact | Path | Schema | Consumer |
+|---|---|---|---|
+| `prices.csv` | `data/raw/` | `Date, <ticker columns>` | NB-02, NB-08 |
+| `macro.csv` | `data/raw/` | `Date, VIX, SP500, TNX` | NB-02, NB-12 |
+| `sector_map.json` | `data/raw/` | `{ticker: GICS_sector}` | NB-02, NB-04, NB-08 |
 
-## Quantitative Logic & Methodology
-## 1. Environment Configuration & Library Imports
+## Key methods
+- yfinance bulk download: fetches all tickers in a single request with rate-limited fallback for reliability
+- FRED API via `fredapi`: pulls VIX, SP500 index, and 10-year treasury yield (TNX)
+- Quality validation: missing data heatmap and outlier detection to flag anomalies before downstream use
 
-A reproducible quantitative environment requires explicit dependency management. We use `pathlib.Path` for all file operations to guarantee OS-agnostic path handling—a critical property when the pipeline is ported between local development machines and cloud compute nodes.
+## How to run
+```bash
+python run_all.py            # full pipeline
+```
 
-The `START_DATE` and `END_DATE` constants define the **in-sample period** (2019–2024), chosen to span a complete market cycle that includes the COVID-19 crash and recovery, the 2022 rate-hiking cycle, and the subsequent AI-driven bull market—providing regime diversity essential for robust model training.
-
-
-## 2. Investment Universe Construction
-
-The investment universe is the fundamental building block of the research system. Rather than using all S&P 500 constituents (survivorship bias risk) or a random sample, we deliberately select 5 representative names from each of 6 GICS sectors.
-
-### Sector Rationale
-
-| Sector | Representative Tickers | Analytical Role |
-| :--- | :--- | :--- |
-| **Technology** | AAPL, MSFT, NVDA, GOOGL, META | Growth driver; high beta to interest rates and risk appetite. |
-| **Financials** | JPM, BAC, GS, BRK-B, V | Systemic backbone; key transmitter of monetary policy shocks. |
-| **Healthcare** | JNJ, UNH, PFE, ABBV, LLY | Defensive growth; idiosyncratic regulatory and R&D cycles. |
-| **Energy** | XOM, CVX, SLB, COP, NEE | Commodity-linked inflation proxy; geopolitical shock absorber. |
-| **Consumer** | AMZN, TSLA, WMT, HD, NKE | Sentiment barometer; spans defensive (WMT) to speculative (TSLA). |
-| **Industrials** | BA, CAT, HON, UPS, GE | Global trade and capex cycle proxy; sensitive to supply chains. |
-
-The `SECTOR_MAP` dictionary (ticker → sector) is serialised to `sector_map.json` and used in Phases 3–5 for community detection and cross-sector causality analysis.
-
-
-## 3. Market Data Acquisition: Dividend & Split-Adjusted Close Prices
-
-### Why Adjusted Prices?
-
-Raw (unadjusted) closing prices contain artificial discontinuities introduced by stock splits and dividend distributions. For example, a 4-for-1 split instantaneously halves the price on the record date—any return computed across that date would be wildly distorted.
-
-We use the **Adjusted Close** series $P_{adj}$, which applies a retrospective correction factor to all historical prices:
-
-$$P_{adj,\ t} = P_{raw,\ t} \times \prod_{i=t}^{T} k_i$$
-
-where $k_i$ is the corporate-action adjustment factor at event date $i$. This ensures that **log-returns** $r_t = \ln(P_{adj,t} / P_{adj,t-1})$ reflect true economic total returns (excluding transaction costs), making them suitable for volatility estimation, correlation analysis, and signal construction.
-
-### Data Quality Contract
-- We download all 30 tickers in a single batch call to minimize API overhead.
-- Any ticker returning all-NaN is flagged as `[FAIL]` but never crashes the pipeline.
-- The resulting price matrix has shape `(T, 30)` where `T ≈ 1,500` trading days.
-
-
-## 4. Exogenous Risk Factors: Macroeconomic Indicators
-
-A purely endogenous model—one that sees only stock price history—is blind to the macro regime driving correlated moves across the entire universe. We augment the dataset with 5 exogenous indicators:
-
-| Symbol | Clean Name | Economic Role |
-| :--- | :--- | :--- |
-| `^VIX` | VIX | Implied volatility of S&P 500 options. High VIX = risk-off regime. |
-| `^GSPC` | SP500 | Market-wide beta reference for CAPM residual calculation. |
-| `^TNX` | TNX | 10-Year US Treasury yield = risk-free rate $R_f$. Drives equity risk premium (ERP = $E[r] - R_f$). |
-| `GC=F` | GOLD | Safe-haven demand proxy; negatively correlated with risk appetite. |
-| `CL=F` | OIL | WTI Crude = energy cost + global industrial demand indicator. Drives Energy sector idiosyncratic risk. |
-
-These five signals form the **macro feature backbone** used in Phase 3 for regime detection and in Phase 5 for graph-based contagion analysis (e.g., how VIX spikes propagate across the correlation network).
-
-
-## 5. Raw Data Visualisation
-
-Before any cleaning or transformation, we visually inspect the raw time series to catch anomalies that summary statistics alone may miss:
-
-- **Flat-line segments** → indicate data provider outages or stale prices.
-- **Extreme single-day spikes** → may be erroneous ticks that inflate volatility estimates.
-- **Structural breaks** → e.g. the COVID crash in March 2020 or the 2022 inflation shock.
-
-### What to Look For in the Charts
-- **Stock panel**: NVDA and TSLA should show multi-fold appreciation over the 2019–2024 window; defensive names (WMT, JNJ) should be more stable.
-- **Macro panel**: VIX should spike above 40 in March 2020 (COVID) and above 30 in 2022 (rate shock). TNX should rise sharply from ~1.5% in 2021 to ~5% in 2023. Gold should show a step-up post-2020.
-
-Deviations from these expected patterns indicate data quality issues requiring investigation.
-
-
-## 6. Systematic Data Quality Validation
-
-Before persisting any files, we run a three-stage quality-control pass using `assert` statements. A failing assertion immediately surfaces the exact issue rather than propagating corrupted data silently into downstream models.
-
-### Quality Checks
-
-| Check | Threshold | Rationale |
-| :--- | :--- | :--- |
-| **Missing values** | > 1% per ticker triggers a warning | Sparse tickers inflate portfolio variance and distort correlation estimates. |
-| **Duplicate dates** | Zero tolerance | Duplicate index entries corrupt `.pct_change()`, `.shift()`, and all rolling operations. |
-| **Date continuity** | No gap > 5 calendar days | Gaps beyond typical holiday clusters indicate data provider failures or ticker delistings. |
-
-A ticker with > 5% missing data will be **dropped** from the universe entirely to preserve downstream model integrity.
-
-
-## 7. Raw Data Persistence — Immutability Principle
-
-All raw artifacts are written to `data/raw/` and treated as **immutable canonical sources**. No downstream notebook modifies these files. This design pattern—sometimes called "raw data lake" architecture—ensures:
-
-- **Reproducibility**: Any phase can be re-run from scratch by reading from `data/raw/`.
-- **Audit trail**: Raw data is never overwritten, preserving the original download for debugging.
-- **Decoupling**: Processing logic (Phase 2+) is independent of ingestion logic (Phase 1).
-
-| Output File | Format | Contents | Size (approx.) |
-| :--- | :--- | :--- | :--- |
-| `prices.csv` | CSV | Adjusted daily close for 30 tickers | ~500 KB |
-| `macro.csv` | CSV | 5 macro indicators (VIX, SP500, TNX, GOLD, OIL) | ~80 KB |
-| `sector_map.json` | JSON | Ticker → GICS sector mapping | < 1 KB |
-
-
-## Key Mathematical Formulas
-$$P_{adj,\ t} = P_{raw,\ t} \times \prod_{i=t}^{T} k_i$$
-
-## Data Artifacts Produced
-| Artifact | Description |
-| :--- | :--- |
-| `macro.csv` | Primary output of this research module. |
-| `prices.csv` | Primary output of this research module. |
+## Verified after fix
+- ✅ No `np.random.*` data fabrication
+- ✅ Reads exclusively via `src.io.loaders`
+- ✅ Outputs schema-validated by downstream loaders

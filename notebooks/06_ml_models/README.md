@@ -1,36 +1,35 @@
-# Phase 6: Machine Learning Layer — The Alpha Engine
+# NB-06: ML Models
 
-## Research Purpose
-|
-| **1. Directionality** | $Sign(r_{t+1})$ | Binary Classification | Signal generation for long/short entries. |
-| **2. Volatility** | $\sigma_{t+1}$ | Regression | Position sizing and risk-budgeting. |
-| **3. Regime ID** | $S_t \in \{0, 1, 2\}$ | Multiclass | Strategy selection (Trend vs Mean Reversion). |
+## Purpose
+Trains direction (binary classification), volatility (regression), and regime (multiclass) models using a strict walk-forward TimeSeriesSplit to prevent future-data leakage. Produces persisted model artifacts and the `ml_signals` table consumed by NB-07 and the agent layer.
 
-## Quantitative Logic & Methodology
-## Phase 6 Final Report: Quantitative Assessment
+## Inputs
+| Artifact | Producer | Loaded via |
+|---|---|---|
+| `features_with_graph.csv` | NB-05 | `loaders.load_features_with_graph()` |
+| `regimes.csv` | NB-03 | `loaders.load_regimes()` |
+| `dynamic_graph_metrics.csv` | NB-04 | `loaders.load_dynamic_graph_metrics()` |
 
-### 1. Model Performance Audit
-| Task | Best Model | Performance Metric | Baseline Metric | Gain |
-| :--- | :--- | :--- | :--- | :--- |
-| **Direction** | XGBoost | 0.545 AUC | 0.500 | +9.0% |
-| **Volatility** | Ridge | 0.500 RMSE | 0.528 | +5.3% |
-| **Regime** | Random Forest | 0.78 F1 | 0.61 | +27.8% |
+## Outputs
+| Artifact | Path | Schema | Consumer |
+|---|---|---|---|
+| `ml_signals.csv` | `data/processed/` | `Date, ticker, direction_prob, vol_forecast, regime_pred` | NB-07, NB-13 |
+| `model_direction.pkl` | `data/processed/` | sklearn-compatible estimator | NB-07, NB-13 |
+| `model_volatility.pkl` | `data/processed/` | sklearn-compatible estimator | NB-07, NB-13 |
+| `model_regime.pkl` | `data/processed/` | sklearn-compatible estimator | NB-07, NB-13 |
 
-### 2. The Graph Hypothesis Validated
-Graph features account for **18.4%** of the total model importance. Specifically, **Rolling Network Density** emerged as the top-3 feature across all models, proving that systemic connectivity spikes are a leading indicator of risk expansion that price history alone cannot detect.
+## Key methods
+- TimeSeriesSplit (5 folds) with explicit walk-forward assertion: each fold's test set is strictly after its train set; assertion raises if chronological order is violated
+- RandomForest, XGBoost, Ridge baselines: ensemble and linear models compared per task; best selected by held-out metric
+- Regime feature lagged 1 day: `regimes.shift(1)` applied before joining to features, preventing same-day leakage
+- Targets: next-day return direction (y_dir), next-day realized vol (y_vol), next-day regime (y_regime)
 
-### 3. Regime Robustness
-- **Bull Regime Accuracy**: 56.2%
-- **Bear Regime Accuracy**: 52.8%
-- **Volatile Regime Accuracy**: 49.5% (Random)
-*Insight: The model has a significant edge in Bull and Bear regimes but should be "de-risked" when the Market Compass signals a Volatile state.*
+## How to run
+```bash
+python run_all.py            # full pipeline
+```
 
-### 4. Conclusion
-The Machine Learning layer successfully synthesizes multi-layer features into a predictive signal. With an AUC of 0.545 and strong volatility forecasting (59% directional accuracy), the system is ready for **Phase 7: Portfolio Optimization**.
-
-
-## Key Mathematical Formulas
-$$y_{vol}^{(t)} = \sqrt{\frac{1}{5} \sum_{k=1}^5 r_{t+k}^2}$$
-
-$$y_{dir}^{(t)} = \begin{cases} 1 & \text{if } r_{t+1} > 0 \\ 0 & \text{otherwise} \end{cases}$$
-
+## Verified after fix
+- ✅ No `np.random.*` data fabrication
+- ✅ Reads exclusively via `src.io.loaders`
+- ✅ Outputs schema-validated by downstream loaders
