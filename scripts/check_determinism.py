@@ -1,9 +1,13 @@
-"""Verify the pipeline is deterministic.
+"""Verify the pipeline is deterministic from NB02 onward.
+
+NB01 is excluded because it hits yfinance/FRED — external APIs that may
+return slightly different bytes across calls (split adjustments, backfills).
+For determinism we hold `data/raw/prices.csv` constant and re-run NB02-15.
 
 Workflow:
-  1. Run `python run_all.py` once.
+  1. Run `python run_all.py --from 02` once (snapshot 1).
   2. Snapshot SHA-256 of every CSV in data/processed/.
-  3. Run `python run_all.py` again.
+  3. Run `python run_all.py --from 02` again (snapshot 2).
   4. Compare hashes; fail if any CSV differs.
 
 JSON files (which embed timestamps) are excluded from the check.
@@ -27,9 +31,9 @@ def snapshot(proc_dir: Path) -> dict[str, str]:
 
 
 def run_pipeline(repo_root: Path):
-    print(f"▶ Running run_all.py …")
+    print(f"▶ Running run_all.py --from 02 …")
     result = subprocess.run(
-        [sys.executable, 'run_all.py'],
+        [sys.executable, 'run_all.py', '--from', '02'],
         cwd=str(repo_root), capture_output=True, text=True,
     )
     if result.returncode != 0:
