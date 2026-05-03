@@ -9,7 +9,6 @@ from src.io.loaders import (
 )
 
 
-@pytest.mark.xfail(strict=True, reason="ml_signals.csv has lowercase 'date' column; will be fixed in NB06 output fix task")
 def test_load_ml_signals_long_format():
     df = load_ml_signals()
     assert 'Date' in df.columns and 'ticker' in df.columns
