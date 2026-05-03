@@ -1,4 +1,4 @@
-date,ticker,headline,sector,category,true_label
+Date,ticker,headline,sector,category,true_label
 2019-01-04,AAPL,"AAPL reports record quarterly revenue, beats estimates by 7%",Technology,Analyst,positive
 2019-01-08,AAPL,"Analysts upgrade AAPL to Buy, raise price target to $206",Technology,Product,positive
 2019-01-10,AAPL,"Data breach at AAPL affects 34M users, regulatory scrutiny follows",Technology,Merger,negative

@@ -50,7 +50,7 @@ def test_load_community_assignments_smoke():
 def test_load_systemic_risk_scores_smoke():
     df = load_systemic_risk_scores()
     assert isinstance(df, pd.DataFrame)
-    assert df.index.name == 'Date'
+    assert df.index.name == 'ticker'
     assert len(df) > 0
 
 
