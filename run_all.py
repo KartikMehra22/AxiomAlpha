@@ -65,9 +65,9 @@ def main() -> int:
         try:
             pm.execute_notebook(
                 str(src), str(src),  # in-place
-                parameters={'RANDOM_SEED': RANDOM_SEED},
                 kernel_name='python3',
                 progress_bar=False,
+                cwd=str(src.parent),  # so notebook's `Path().absolute()` walks correctly
             )
         except pm.PapermillExecutionError as e:
             print(f"\n❌ {nb_name} FAILED:")
