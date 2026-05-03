@@ -41,41 +41,49 @@ Traditional algorithmic trading models treat assets as independent time series, 
 
 ## 🔬 Complete Research Pipeline
 
-| Phase | Notebook | What It Does | Key Output | Status |
+| Phase | Module | What It Does | Key Output | Status |
 |:---|:---|:---|:---|:---:|
-| **Data** | `01_data_pipeline.ipynb` | Ingests 5 years of daily data for 30 assets via yfinance & FRED. | `raw_prices.csv` | ✅ |
-| **Data** | `02_data_processing.ipynb` | Cleans data, computes returns, builds massive feature matrices. | `features.csv` | ✅ |
-| **Stat** | `03_quant_core.ipynb` | Fits GARCH models and identifies rolling regimes. | `risk_metrics.csv` | ✅ |
-| **Graph** | `04_graph_engine.ipynb` | Builds dynamic correlation networks using NetworkX. | `network_edges.csv` | ✅ |
-| **Graph** | `05_graph_analysis.ipynb` | Computes centrality, density, and systemic risk scores. | `graph_features.csv` | ✅ |
-| **ML** | `06_ml_models.ipynb` | Trains XGBoost, Random Forest, and Ridge estimators. | `ml_predictions.csv` | ✅ |
-| **ML** | `07_ml_analysis.ipynb` | Analyzes model feature importance and performance bounds. | `ml_eval.json` | ✅ |
-| **NLP** | `08_nlp_sentiment.ipynb` | Generates synthetic market news and runs FinBERT scoring. | `news_sentiment.csv` | ✅ |
-| **RAG** | `09_rag_setup.ipynb` | Embeds news into FAISS vector database for query retrieval. | `faiss_index.bin` | ✅ |
-| **NLP** | `10_nlp_analysis.ipynb` | Computes Information Coefficient (IC) of sentiment signals. | `nlp_metrics.json` | ✅ |
-| **Opt** | `11_portfolio_optimization.ipynb` | Synthesizes all signals via CVXPY into risk-adjusted weights. | `optimal_weights.csv` | ✅ |
-| **Sim** | `12_backtesting.ipynb` | Runs a walk-forward, transaction-cost-aware backtest. | `backtest_results.csv` | ✅ |
-| **Agent** | `13_agent_system.ipynb` | Defines 7 specialized AI agents (Data, Quant, Graph, ML, NLP, Risk, Strategy). | `agent_classes.py` | ✅ |
-| **Agent** | `14_agent_orchestration.ipynb` | Wires agents into an autonomous LangGraph state machine. | `pipeline_output.json` | ✅ |
-| **Demo** | `15_agent_demo.ipynb` | Interactive showcase with regime simulations, stress tests, and LLM Q&A. | `fig_demo_decision.png` | ✅ |
+| **Data** | [01_data_pipeline](file:///Users/kartikmehra/Desktop/Projects/AxiomAlpha/notebooks/01_data_pipeline) | Ingests 5 years of daily data for 30 assets via yfinance & FRED. | `prices.csv` | COMPLETE |
+| **Data** | [02_data_processing](file:///Users/kartikmehra/Desktop/Projects/AxiomAlpha/notebooks/02_data_processing) | Cleans data, computes returns, builds massive feature matrices. | `features_normalized.csv` | COMPLETE |
+| **Stat** | [03_quant_core](file:///Users/kartikmehra/Desktop/Projects/AxiomAlpha/notebooks/03_quant_core) | Fits GARCH models and identifies rolling regimes. | `risk_metrics.csv` | COMPLETE |
+| **Graph** | [04_graph_engine](file:///Users/kartikmehra/Desktop/Projects/AxiomAlpha/notebooks/04_graph_engine) | Builds dynamic correlation networks using NetworkX. | `mst_edges.csv` | COMPLETE |
+| **Graph** | [05_graph_analysis](file:///Users/kartikmehra/Desktop/Projects/AxiomAlpha/notebooks/05_graph_analysis) | Computes centrality, density, and systemic risk scores. | `centrality_scores.csv` | COMPLETE |
+| **ML** | [06_ml_models](file:///Users/kartikmehra/Desktop/Projects/AxiomAlpha/notebooks/06_ml_models) | Trains XGBoost, Random Forest, and Ridge estimators. | `ml_predictions.csv` | COMPLETE |
+| **ML** | [07_ml_analysis](file:///Users/kartikmehra/Desktop/Projects/AxiomAlpha/notebooks/07_ml_analysis) | Analyzes model feature importance and performance bounds. | `ml_eval.json` | COMPLETE |
+| **NLP** | [08_nlp_sentiment](file:///Users/kartikmehra/Desktop/Projects/AxiomAlpha/notebooks/08_nlp_sentiment) | Generates synthetic market news and runs FinBERT scoring. | `news_sentiment.csv` | COMPLETE |
+| **RAG** | [09_rag_setup](file:///Users/kartikmehra/Desktop/Projects/AxiomAlpha/notebooks/09_rag_setup) | Embeds news into FAISS vector database for query retrieval. | `faiss_index.bin` | COMPLETE |
+| **NLP** | [10_nlp_analysis](file:///Users/kartikmehra/Desktop/Projects/AxiomAlpha/notebooks/10_nlp_analysis) | Computes Information Coefficient (IC) of sentiment signals. | `nlp_metrics.json` | COMPLETE |
+| **Opt** | [11_portfolio_optimization](file:///Users/kartikmehra/Desktop/Projects/AxiomAlpha/notebooks/11_portfolio_optimization) | Synthesizes all signals via CVXPY into risk-adjusted weights. | `optimal_weights.csv` | COMPLETE |
+| **Sim** | [12_backtesting](file:///Users/kartikmehra/Desktop/Projects/AxiomAlpha/notebooks/12_backtesting) | Runs a walk-forward, transaction-cost-aware backtest. | `backtest_results.csv` | COMPLETE |
+| **Agent** | [13_agent_system](file:///Users/kartikmehra/Desktop/Projects/AxiomAlpha/notebooks/13_agent_system) | Defines 7 specialized AI agents (Data, Quant, Graph, ML, NLP, Risk, Strategy). | `agent_classes.py` | COMPLETE |
+| **Agent** | [14_agent_orchestration](file:///Users/kartikmehra/Desktop/Projects/AxiomAlpha/notebooks/14_agent_orchestration) | Wires agents into an autonomous LangGraph state machine. | `pipeline_output.json` | COMPLETE |
+| **Demo** | [15_agent_demo](file:///Users/kartikmehra/Desktop/Projects/AxiomAlpha/notebooks/15_agent_demo) | Interactive showcase with regime simulations, stress tests, and LLM Q&A. | `fig_demo_decision.png` | COMPLETE |
 
 ---
 
-## 📈 Key Results
+## 📊 Results
 
-| Component | Metric | Value | vs Baseline |
+### 📈 Live Performance
+
+> All headline numbers are produced by the live pipeline. See **[data/processed/RESULTS.md](data/processed/RESULTS.md)** — regenerated by every `python run_all.py`.
+
+### 🤖 ML & Model Results (Verified)
+| Component | Metric | Value | Significance |
 |:---|:---|:---|:---|
-| **Machine Learning** | Direction Prediction AUC | **0.545** | +9.0% over random (0.500) |
-| **Natural Language** | Sentiment Lag-1 IC | **0.0503** | Institutional grade threshold (>0.03) |
-| **Statistical Model** | Regime Classification F1 | **0.78** | +27.8% over static baseline |
-| **Graph Theory** | Total Feature Importance | **18.4%** | Unlocks entirely new alpha orthogonal to price |
-| **Data Processing** | Synthetic News Articles | **13,576** | Processed via local embedding |
+| **Machine Learning** | Direction AUC | **0.545** | +9% vs random (0.50) |
+| **Statistical Model** | Regime F1 Score | **0.780** | +27.8% vs baseline |
+| **Sentiment Analysis** | Sentiment IC | **0.0503** | Institutional grade (>0.03) |
+| **Graph Theory** | Feature Importance | **18.4%** | % of total model features |
 
-*Regime-Specific Accuracy:*
+**Regime-Specific Accuracy:**
 - 🟢 **Bull Regime Accuracy:** 56.2%
 - 🔴 **Bear Regime Accuracy:** 52.8%
-- 🟠 **Volatile Regime Accuracy:** 49.5% *(Triggers portfolio de-risking)*
-- 📉 **GARCH Volatility Persistence:** ~0.998 *(Highly clustered shocks)*
+- 🟠 **Volatile Regime Accuracy:** 49.5% *(De-risk signal)*
+
+### 🗄️ Data Verification
+- **Universe:** 30 tickers, 1509 days (2019-2024), 0 missing values.
+- **Confirmed Tickers:**  
+  `AAPL`, `MSFT`, `NVDA`, `GOOGL`, `META`, `JPM`, `BAC`, `GS`, `MS`, `WFC`, `JNJ`, `UNH`, `PFE`, `ABBV`, `MRK`, `XOM`, `CVX`, `COP`, `SLB`, `EOG`, `AMZN`, `TSLA`, `HD`, `MCD`, `NKE`, `BA`, `CAT`, `GE`, `MMM`, `UPS`.
 
 ---
 
@@ -105,7 +113,7 @@ We rigorously tested four core market hypotheses in Notebook `03`:
 | **NLP & Search** | `transformers` (FinBERT), `faiss-cpu` | Sentiment extraction and rapid RAG vector retrieval. |
 | **Optimization** | `cvxpy` | Convex portfolio weight optimization under CVaR constraints. |
 | **Orchestration** | `langgraph`, `langchain` | Stateful multi-agent routing, condition evaluation. |
-| **Gen AI** | `anthropic` (Claude) | Natural language explanation of quantitative decisions. |
+| **NLP Embeddings** | `sentence-transformers` | Real embeddings (all-MiniLM-L6-v2) for synthetic-news RAG. |
 
 ---
 
@@ -120,8 +128,12 @@ We rigorously tested four core market hypotheses in Notebook `03`:
    ```bash
    pip install -r requirements.txt
    ```
-3. **Run the notebooks in order:**
-   Navigate to the `notebooks/` directory and execute them sequentially (01 → 15) to regenerate the entire pipeline from scratch.
+3. **Run the pipeline:**
+   ```bash
+   python run_all.py            # full end-to-end pipeline (15 notebooks)
+   python scripts/check_pipeline.py     # smoke test (no random data leaks)
+   python scripts/check_determinism.py  # verify two runs produce identical CSVs
+   ```
 
 ---
 
@@ -136,34 +148,27 @@ The static `sector_map.json` is committed to the repository to map tickers to GI
 
 ```text
 AxiomAlpha/
-├── README.md
-├── requirements.txt
-├── .gitignore
-├── scripts/
-│   ├── create_notebook_15.py
-│   ├── update_demo_notebook.py
-│   └── update_notebook.py
-├── notebook_docs/        # Auto-generated documentation for every notebook
-└── notebooks/
-    ├── 01_data_pipeline.ipynb
-    ├── 02_data_processing.ipynb
-    ├── 03_quant_core.ipynb
-    ├── 04_graph_engine.ipynb
-    ├── 05_graph_analysis.ipynb
-    ├── 06_ml_models.ipynb
-    ├── 07_ml_analysis.ipynb
-    ├── 08_nlp_sentiment.ipynb
-    ├── 09_rag_setup.ipynb
-    ├── 10_nlp_analysis.ipynb
-    ├── 11_portfolio_optimization.ipynb
-    ├── 12_backtesting.ipynb
-    ├── 13_agent_system.ipynb
-    ├── 14_agent_orchestration.ipynb
-    ├── 15_agent_demo.ipynb
-    └── data/
-        ├── raw/          # Raw downloaded tickers
-        ├── processed/    # Generated features and signals
-        └── outputs/      # Exported publication-ready visualizations
+├── README.md             # Project overview and verified results
+├── requirements.txt      # Dependency manifest
+├── .gitignore            # Version control exclusions
+├── data/                 # Unified data lake
+│   ├── raw/              # Immutable source-of-truth data
+│   ├── processed/        # Model-ready features and signals
+│   └── outputs/          # Research visualizations and reports
+├── configs/settings.py     # Centralized config (tickers, seeds, hyperparameters)
+├── src/io/loaders.py       # Single source of truth for every read
+├── scripts/check_pipeline.py     # Smoke test for random-data regressions
+├── scripts/check_determinism.py  # Back-to-back reproducibility check
+├── run_all.py              # papermill orchestrator: one command runs everything
+├── tests/                  # pytest suite for loaders & checks
+├── data/processed/RESULTS.md     # Auto-generated headline numbers
+├── docs/superpowers/       # Specs and implementation plans
+├── scripts/              # Pipeline automation utilities
+└── notebooks/            # Research modules (organized by phase)
+    ├── 01_data_pipeline/       # Module 01 ingestion & validation
+    ├── 02_data_processing/     # Module 02 cleaning & normalization
+    ├── ...                     # Modules 03-14
+    └── 15_agent_demo/          # Final multi-agent showcase
 ```
 
 ---
@@ -171,13 +176,23 @@ AxiomAlpha/
 ## ⚠️ Limitations & Future Work
 
 While AxiomAlpha demonstrates significant predictive capabilities, it remains a simulated environment with specific boundaries:
-- **Synthetic News Data:** To bypass expensive data vendor APIs, the project utilizes synthetically generated financial news. Real-world noisy unstructured text presents higher parsing difficulty.
+- **Synthetic News Data:** To bypass expensive vendor APIs, NB08 generates synthetic financial headlines using deterministic templates (seed=42). However, **FinBERT scoring and sentence-transformer embeddings are real** — only the headline text is synthetic. Real-world news ingestion is planned future work.
 - **Universe Size:** The system operates on a curated 30-stock universe. Scaling to the Russell 3000 would require transitioning from `networkx` to highly optimized GPU graph frameworks (e.g., cuGraph).
 - **Transaction Costs:** Slippage and market impact are modeled statically. Real deployment requires execution algorithms (e.g., VWAP/TWAP integration).
 - **Long-Only Constraint:** The current optimizer prohibits short selling, limiting absolute return potential in bear markets.
 
 **Future Work:**
 Transitioning to live WebSocket data streams, expanding universe breadth, and integrating Reinforcement Learning agents for execution-level routing.
+
+---
+
+## ✅ Honesty Notes
+
+- All headline numbers come from the live pipeline (`data/processed/RESULTS.md`), regenerated each run.
+- Synthetic news (NB08): the **headlines** are synthetic; FinBERT scoring and sentence-transformer embeddings are real.
+- Agent explanations (NB13–15) are **templated**, not LLM-generated. The `anthropic` package is not used.
+- The pipeline is **deterministic**: `python run_all.py` produces bit-identical CSVs across runs (seed = 42).
+- Backtest assumes 5 bps transaction cost, no slippage modeling, long-only constraint.
 
 ---
 
