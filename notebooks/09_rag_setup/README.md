@@ -1,54 +1,32 @@
-# Phase 6B: RAG System — Financial Knowledge Base
+# NB-09: RAG Setup
 
-## Research Purpose
-In institutional research, data is often trapped in unstructured text (news, earnings calls, analyst notes). **Retrieval-Augmented Generation (RAG)** provides the bridge between this unstructured "knowledge" and the quantitative "engine."
+## Purpose
+Builds a real FAISS retrieval index over synthetic news headlines using `sentence-transformers` (all-MiniLM-L6-v2, 384-dim). Encodes each headline into a normalized 384-dimensional embedding and stores the result in an IndexFlatIP structure where inner product equals cosine similarity for unit vectors.
 
-### The Strategic Value of RAG
-1. **Grounded Reasoning**: Unlike pure LLMs that may hallucinate numbers, RAG retrieves specific historical headlines and returns to ground every answer.
-2. **Qualitative Recall**: Researchers can ask complex temporal questions like *"What drove volatility for Banks in early 2020?"* and receive a data-backed synthesis.
-3. **Auditability**: Every generated insight is linked to specific source documents ($ID_{art}$, $ID_{sum}$), ensuring a clear line of sight from information to signal.
+## Inputs
+| Artifact | Producer | Loaded via |
+|---|---|---|
+| `synthetic_news` | NB08 | `src.io.loaders` |
 
-### Architecture: The Vector Intelligence Loop
-**Documents** (Enriched Headlines) $\rightarrow$ **Vectors** (Latent Semantic Space) $\rightarrow$ **Retrieval** (Similarity Search) $\rightarrow$ **Synthesis** (Contextual Response).
+## Outputs
+| Artifact | Path | Schema | Consumer |
+|---|---|---|---|
+| `embeddings.npy` | `data/processed/embeddings.npy` | N×384 float32 array | NB13, NB15 |
+| `faiss_index.bin` | `data/processed/faiss_index.bin` | FAISS IndexFlatIP | NB13, NB15 |
+| `rag_documents.json` | `data/processed/rag_documents.json` | list of headline dicts | NB13, NB15 |
+| `rag_models.pkl` | `data/processed/rag_models.pkl` | serialized retriever state | NB13, NB15 |
 
-## Quantitative Logic & Methodology
-## Document Construction: Enriching the Knowledge Corpus
+## Key methods
+- `SentenceTransformer.encode()`: encodes headlines with `normalize_embeddings=True` producing unit vectors
+- `faiss.IndexFlatIP`: inner-product index; cosine similarity for normalized vectors
+- `faiss.write_index`: persists index to `faiss_index.bin`
 
-Raw headlines are too sparse for effective retrieval. To solve this, we implement **Contextual Enrichment**, transforming 13k+ headlines into a structured knowledge graph.
+## How to run
+```bash
+python run_all.py
+```
 
-### 1. Document Types
-- **Atomic Articles**: Daily headlines enriched with asset returns and market status.
-- **Monthly Ticker Summaries**: Aggregated performance and news volume per asset.
-- **Sector Quarterly Reports**: High-level themes and risks per industry.
-
-### 2. The Enrichment Formula
-Every document is transformed into a rich text block:
-$$Doc = \{Date, Asset, Sector, Headline, Sentiment, Ret, Regime\}$$
-This ensures that a query about "AAPL volatility" retrieves not just the news, but the price action context surrounding it.
-
-
-## Embedding & Vector Store: Mapping Meaning to Geometry
-
-We map our enriched documents into a high-dimensional **Latent Semantic Space** where documents with similar meanings are mathematically "close."
-
-### 1. TF-IDF Representation
-We use the Term Frequency-Inverse Document Frequency weight to represent word importance:
-$$W_{t,d} = TF_{t,d} \cdot \log\left(\frac{N}{DF_t}\right)$$
-
-### 2. Dimensionality Reduction (SVD)
-To capture semantic relationships rather than just keyword matches, we apply **Singular Value Decomposition (SVD)** to reduce the space to 384 dimensions.
-$$A \approx U \Sigma V^T$$
-
-### 3. PCA Projection (Insight)
-**Visualization 2** below shows the PCA projection of our 15k documents. We look for **Structural Clustering**: Articles should naturally group by Sector (Tech, Finance) or Sentiment (Positive, Negative) if the embeddings are capturing the underlying financial semantics.
-
-
-## Key Mathematical Formulas
-$$Doc = \{Date, Asset, Sector, Headline, Sentiment, Ret, Regime\}$$
-
-$$W_{t,d} = TF_{t,d} \cdot \log\left(\frac{N}{DF_t}\right)$$
-
-$$A \approx U \Sigma V^T$$
-
-$$\text{Similarity}(q, d) = \frac{q \cdot d}{\|q\| \|d\|}$$
-
+## Verified after fix
+- ✅ No `np.random.*` data fabrication
+- ✅ Reads exclusively via `src.io.loaders`
+- ✅ Outputs schema-validated by downstream loaders

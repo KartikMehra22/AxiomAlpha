@@ -1,87 +1,37 @@
-# Phase 9B: LangGraph Orchestration
+# NB-14: Agent Orchestration
 
-## Research Purpose
+## Purpose
+Wires the 7 agents defined in NB13 into an autonomous LangGraph state machine; produces a final pipeline output JSON. State transitions are driven by real CSV data; no random fabrication is used at any node.
 
+## Inputs
+| Artifact | Producer | Loaded via |
+|---|---|---|
+| `master_signals` | NB06/NB07 | `src.io.loaders` |
+| `optimal_weights` | NB11 | `src.io.loaders` |
+| `regimes` | NB03 | `src.io.loaders` |
+| `risk_metrics` | NB03 | `src.io.loaders` |
+| `sentiment_features` | NB08 | `src.io.loaders` |
+| `centrality_scores` | NB04/NB05 | `src.io.loaders` |
+| `systemic_risk_scores` | NB04/NB05 | `src.io.loaders` |
+| `performance_metrics` | NB12 | `src.io.loaders` |
+| `attribution_results` | NB12 | `src.io.loaders` |
 
-## Quantitative Logic & Methodology
-# Phase 9B: LangGraph Orchestration
-## AxiomAlpha — AI Quant Research System
+## Outputs
+| Artifact | Path | Schema | Consumer |
+|---|---|---|---|
+| `pipeline_output.json` | `data/processed/pipeline_output.json` | `{tickers, period, latest_regime, optimal_weights, sharpe, per_agent_state}` | NB15 |
 
-### 1. Why We Did It (The Purpose)
-In quantitative finance, decision-making is not a single linear step. It requires continuous coordination between data engineering, statistical modeling, machine learning, natural language processing, risk management, and portfolio optimization. 
-Traditionally, these components operate in silos or via rigid sequential pipelines. By using **LangGraph**, we transform AxiomAlpha into an autonomous, state-driven multi-agent system. This allows the system to:
-- **Adapt to failures** (e.g., if risk limits are breached, it can recursively route back to the strategy agent).
-- **Execute in parallel** (e.g., ML predictions and NLP sentiment analysis can happen concurrently, saving execution time).
-- **Maintain a robust audit trail** of every decision made by every agent at every step of the orchestration.
+## Key methods
+- LangGraph state machine: agents called sequentially through typed graph edges
+- State populated exclusively from real CSV loaders (no `np.random.randn` fabrication)
+- Conditional routing: DataAgent quality check gates downstream execution
 
-### 2. What We Did (The Implementation)
-We orchestrated 7 specialized AI Agents into a state machine with conditional routing:
-1. **DataAgent**: Validates incoming market data and features.
-2. **QuantAgent**: Identifies the current market regime (Bull, Bear, Volatile).
-3. **GraphAgent**: Analyzes systemic risk and network centrality among assets.
-4. **MLAgent**: Generates alpha signals using machine learning models.
-5. **NLPAgent**: Parses news and macro reports to gauge market sentiment.
-6. **RiskAgent**: Acts as the system's "brakes," auditing the proposed portfolio against strict risk limits.
-7. **StrategyAgent**: The final decision-maker that synthesizes all signals into target portfolio weights.
+## How to run
+```bash
+python run_all.py
+```
 
-### 3. Key Concepts & Formulas Used
-During the orchestration, the agents rely on several quantitative models:
-- **Value at Risk (VaR) & Conditional Value at Risk (CVaR)**: Used by the RiskAgent to assess tail risk. $VaR$ answers "what is the most I can expect to lose with 95% confidence?", while $CVaR$ answers "if I do lose more than $VaR$, how bad will it be?".
-- **Regime Classification**: Used by the QuantAgent to classify the market state based on volatility ($v$) and momentum ($m$).
-- **Mean-Variance Optimization**: Used by the StrategyAgent to maximize expected return for a given level of risk: $\max_w (w^T \mu - \frac{\lambda}{2} w^T \Sigma w)$
-- **Network Centrality**: Used by the GraphAgent to penalize assets that are too highly interconnected, thus reducing systemic risk exposure.
-
-### 4. Insights Gained from the Orchestrated Analysis
-Running this pipeline gives us a comprehensive, unified view of the market:
-- **Dynamic Asset Allocation**: The system shifts cash and asset weights dynamically based on the identified market regime.
-- **Risk-Adjusted Alpha**: We don't just chase returns; every signal is rigorously audited by the RiskAgent, ensuring that risk limits are respected.
-- **Explainable AI in Finance**: Because each agent contributes to the `GraphState`, we can precisely trace *why* the StrategyAgent chose a specific allocation (e.g., "Cash was raised to 30% because the RiskAgent flagged elevated volatility").
-
-### AxiomAlpha Graph Architecture
-
-  ┌──────────┐
-  │  START   │
-  └────┬─────┘
-       │
-       ▼
-  ┌──────────┐    quality_score < 60
-  │DataAgent │─────────────────────→ END (abort)
-  └────┬─────┘
-       │ quality_score ≥ 60
-       ▼
-  ┌──────────┐
-  │QuantAgent│
-  └────┬─────┘
-       │
-       ▼
-  ┌──────────────────────────────┐
-  │   PARALLEL EXECUTION         │
-  │  ┌──────────┐ ┌──────────┐  │
-  │  │GraphAgent│ │ MLAgent  │  │
-  │  └──────────┘ └──────────┘  │
-  │  ┌──────────┐               │
-  │  │ NLPAgent │               │
-  │  └──────────┘               │
-  └──────────────────────────────┘
-       │
-       ▼
-  ┌──────────┐
-  │RiskAgent │
-  └────┬─────┘
-       │
-       ├─ violations > 0 ──→ StrategyAgent (with constraints)
-       │                           │
-       └─ no violations ──→ StrategyAgent
-                                   │
-                                   ▼
-                              ┌──────────┐
-                              │  Output  │
-                              └──────────┘
-
-### State Transitions
-- **Data quality check** → abort or continue
-- **Risk violations** → re-optimize with constraints
-- **Agent errors** → log and continue with defaults
-- **Max retries** → abort with best available result
-
-
+## Verified after fix
+- ✅ No `np.random.*` data fabrication
+- ✅ Reads exclusively via `src.io.loaders`
+- ✅ Outputs schema-validated by downstream loaders
