@@ -1,0 +1,6 @@
+{
+  "best_model": "xgboost_direction",
+  "avg_ic": 0.2506448699848506,
+  "alpha_ic": 0.26612249924800985,
+  "risk_ic": 0.18264053381961354
+}

@@ -111,8 +111,13 @@ def _load_long_csv(
 ) -> pd.DataFrame:
     """Long-format CSV: Date and ticker as columns (not index)."""
     p = _require(path, producer_nb=producer_nb)
-    df = pd.read_csv(p, parse_dates=['Date'])
-    df['Date'] = df['Date'].dt.normalize()
+    df = pd.read_csv(p)
+    # Normalise date column name — NB06 emits lowercase 'date'
+    date_col = next((c for c in df.columns if c.lower() == 'date'), None)
+    if date_col and date_col != 'Date':
+        df = df.rename(columns={date_col: 'Date'})
+    if 'Date' in df.columns:
+        df['Date'] = pd.to_datetime(df['Date']).dt.normalize()
     return _validate(
         df,
         required_cols=['Date', 'ticker'] + (required_cols or []),
@@ -195,9 +200,12 @@ def load_community_assignments() -> pd.DataFrame:
 
 
 def load_systemic_risk_scores() -> pd.DataFrame:
-    return _load_wide_csv(PROC / 'systemic_risk_scores.csv',
-                          producer_nb='NB05_graph_analysis',
-                          name='systemic_risk_scores')
+    """Load per-ticker systemic risk scores. Index is ticker (not Date)."""
+    p = _require(PROC / 'systemic_risk_scores.csv',
+                 producer_nb='NB05_graph_analysis')
+    df = pd.read_csv(p, index_col=0)
+    df.index.name = 'ticker'
+    return df
 
 
 def load_features_with_graph() -> pd.DataFrame:
