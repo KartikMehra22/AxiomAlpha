@@ -5,6 +5,8 @@ from src.io.loaders import (
     load_features_raw, load_features_normalized, load_feature_scaler,
 )
 
+pytestmark = pytest.mark.requires_artifacts
+
 
 def test_load_log_returns_shape_and_index():
     df = load_log_returns()

@@ -33,41 +33,211 @@
   ],
   "period_start": "2019-01-03",
   "period_end": "2024-12-30",
-  "latest_regime": 1,
-  "optimal_weights": {
-    "AAPL": 4.744229431607923e-16,
-    "V": 6.545798323077114e-16,
-    "UPS": 0.0597237850223196,
-    "UNH": 0.1499999999999986,
-    "TSLA": 3.5236662795251316e-16,
-    "SLB": 6.383758629443032e-17,
-    "PFE": 9.004269145229115e-17,
-    "NVDA": 4.663602580975013e-16,
-    "NKE": 3.05745243551208e-16,
-    "NEE": 0.1096002542188615,
-    "MSFT": 3.6316439422254693e-16,
-    "META": 1.8276116605819823e-16,
-    "LLY": 0.0430713838487352,
-    "JPM": 6.686262845616674e-16,
-    "JNJ": 0.1499999999999992,
-    "HON": 5.208652912644345e-16,
-    "HD": 0.0049716862441143,
-    "GS": 6.979448945149722e-16,
-    "GOOGL": 5.955058487919806e-16,
-    "GE": 1.6146584387324127e-16,
-    "CVX": 0.0372036257280063,
-    "COP": 4.055580326709742e-16,
-    "CAT": 0.1299657533917853,
-    "BRK-B": 0.1499999999999988,
-    "BAC": 2.641692071462997e-16,
-    "BA": 8.466452140042802e-16,
-    "AMZN": 3.453672844558391e-16,
-    "ABBV": 0.0870826489833257,
-    "WMT": 0.0783808625628476,
-    "XOM": 5.767087350049202e-17
+  "data_report": {
+    "log_returns_rows": 1508,
+    "log_returns_tickers": 30,
+    "macro_rows": 1509,
+    "first_date": "2019-01-03",
+    "last_date": "2024-12-30"
   },
-  "sharpe": 0.7425,
-  "status": "Complete",
-  "final_regime": "Unknown",
-  "confidence": 0.0
+  "data_valid": true,
+  "quant_summary": {
+    "current_regime_encoded": 1,
+    "mean_garch_vol": 1.6738634807363006,
+    "mean_var_95": -0.03038724716871575,
+    "mean_cvar_95": -0.04810115926868635,
+    "mean_downside_vol": 0.2528141131616212
+  },
+  "graph_summary": {
+    "top_systemic_tickers": [
+      {
+        "ticker": "BRK-B",
+        "score": 100.0
+      },
+      {
+        "ticker": "V",
+        "score": 86.70427663543954
+      },
+      {
+        "ticker": "HON",
+        "score": 74.88412422793083
+      },
+      {
+        "ticker": "GS",
+        "score": 66.61321310043039
+      },
+      {
+        "ticker": "HD",
+        "score": 66.53274884027498
+      }
+    ],
+    "top_pagerank_tickers": [
+      {
+        "ticker": "BRK-B",
+        "pagerank": 0.0649642788208994
+      },
+      {
+        "ticker": "V",
+        "pagerank": 0.0555927848956703
+      },
+      {
+        "ticker": "HON",
+        "pagerank": 0.0546488248908713
+      },
+      {
+        "ticker": "GS",
+        "pagerank": 0.051389773275642
+      },
+      {
+        "ticker": "JPM",
+        "pagerank": 0.049828237229853
+      }
+    ]
+  },
+  "ml_summary": {
+    "as_of": "2024-12-27",
+    "top_long_signals": [
+      {
+        "ticker": "UNH",
+        "p_up": 0.56974834
+      },
+      {
+        "ticker": "HD",
+        "p_up": 0.55138874
+      },
+      {
+        "ticker": "CVX",
+        "p_up": 0.5483455
+      },
+      {
+        "ticker": "NVDA",
+        "p_up": 0.5417389
+      },
+      {
+        "ticker": "BRK-B",
+        "p_up": 0.5414693
+      }
+    ]
+  },
+  "nlp_summary": {
+    "avg_sentiment_30d": {
+      "AAPL": -0.8815218154340982,
+      "ABBV": 0.9310416495427488,
+      "AMZN": -0.6109370405320079,
+      "BA": 0.4675806473940611,
+      "BAC": -0.4523645672015846,
+      "BRK-B": -0.8663723208010197,
+      "CAT": -0.20986657217144966,
+      "COP": -0.9114659801125526,
+      "CVX": -0.00862409919500362,
+      "GE": 0.2585385097190738,
+      "GOOGL": -0.016391871729865656,
+      "GS": -0.004767101723700762,
+      "HD": 0.7835142146795988,
+      "HON": -0.34529330146809417,
+      "JNJ": 0.9165621665306389,
+      "JPM": 0.1763523256406188,
+      "LLY": 0.011450535152107533,
+      "META": -0.3908443475763003,
+      "MSFT": 0.2052548830397427,
+      "NEE": -0.911159597337246,
+      "NKE": 0.20335046217466388,
+      "NVDA": -0.6018795548006892,
+      "PFE": -0.2676510042510927,
+      "SLB": 0.939494288759306,
+      "TSLA": -0.9186245892196894,
+      "UNH": 0.9240642748773098,
+      "WMT": -0.18003589799627662,
+      "XOM": 0.9400703981518745
+    },
+    "most_positive": "XOM",
+    "most_negative": "TSLA"
+  },
+  "risk_audit": {
+    "perf_dict": {
+      "Equal Weight": {
+        "ann_return": 0.205,
+        "ann_vol": 0.2222,
+        "sharpe": 0.7425,
+        "sortino": 0.6933,
+        "calmar": 0.5152,
+        "max_dd": -0.3979,
+        "var_95": 0.0188,
+        "cvar_95": 0.0335,
+        "n_days": 1239.0
+      },
+      "Markowitz": {
+        "ann_return": 0.2599,
+        "ann_vol": 0.2216,
+        "sharpe": 0.9927,
+        "sortino": 0.924,
+        "calmar": 0.7137,
+        "max_dd": -0.3642,
+        "var_95": 0.0188,
+        "cvar_95": 0.0326,
+        "n_days": 1239.0
+      },
+      "AxiomAlpha": {
+        "ann_return": 0.1852,
+        "ann_vol": 0.133,
+        "sharpe": 1.0916,
+        "sortino": 1.0266,
+        "calmar": 0.9543,
+        "max_dd": -0.194,
+        "var_95": 0.0125,
+        "cvar_95": 0.0191,
+        "n_days": 1239.0
+      }
+    }
+  },
+  "strategy_decision": {
+    "as_of": "2024-12-30",
+    "top_holdings": [
+      {
+        "ticker": "TSLA",
+        "weight": 0.15
+      },
+      {
+        "ticker": "NEE",
+        "weight": 0.1499999999999938
+      },
+      {
+        "ticker": "ABBV",
+        "weight": 0.1499999999999837
+      },
+      {
+        "ticker": "PFE",
+        "weight": 0.1499999999999791
+      },
+      {
+        "ticker": "LLY",
+        "weight": 0.149999999999957
+      },
+      {
+        "ticker": "WMT",
+        "weight": 0.1499999999999499
+      },
+      {
+        "ticker": "JNJ",
+        "weight": 0.0440440291085656
+      },
+      {
+        "ticker": "META",
+        "weight": 0.0368351709955703
+      },
+      {
+        "ticker": "UPS",
+        "weight": 0.0167350244849068
+      },
+      {
+        "ticker": "AMZN",
+        "weight": 0.0023857754109487
+      }
+    ],
+    "cash_pct": 0.0,
+    "rationale": "Templated explanation: position sized by AxiomAlpha optimizer (see NB11). Regime overlay and systemic-risk penalty are baked into the weights. Risk audit: no guardrail breaches."
+  },
+  "aborted": false,
+  "risk_alert": false,
+  "status": "complete"
 }

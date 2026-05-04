@@ -8,6 +8,8 @@ from src.io.loaders import (
     load_granger_causality, load_leader_follower, load_graph_intelligence,
 )
 
+pytestmark = pytest.mark.requires_artifacts
+
 
 def test_load_risk_metrics_has_date_and_ticker():
     df = load_risk_metrics()

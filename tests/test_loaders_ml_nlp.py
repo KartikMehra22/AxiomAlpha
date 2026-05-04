@@ -8,6 +8,8 @@ from src.io.loaders import (
     load_embeddings, load_faiss_index, load_rag_documents,
 )
 
+pytestmark = pytest.mark.requires_artifacts
+
 
 def test_load_ml_signals_long_format():
     df = load_ml_signals()

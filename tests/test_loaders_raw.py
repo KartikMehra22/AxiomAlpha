@@ -5,6 +5,8 @@ from src.io.loaders import (
     PipelineDataError,
 )
 
+pytestmark = pytest.mark.requires_artifacts
+
 
 def test_load_prices_returns_dataframe_with_date_index():
     df = load_prices()

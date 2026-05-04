@@ -1,4 +1,5 @@
 # AxiomAlpha — pinned for reproducibility (Python 3.11+)
+# Pins match the verified working environment as of 2026-05.
 
 # --- Core data ---
 pandas==2.2.3
@@ -37,13 +38,18 @@ umap-learn==0.5.3
 # --- Optimization ---
 cvxpy==1.8.2
 
-# --- Agent system (anthropic removed; we use templated explanations) ---
+# --- Agent system ---
+# Note: anthropic + langchain were evaluated and removed in favour of
+# templated explanations + a minimal LangGraph state machine (NB13/NB14).
 langgraph==0.0.40
-# langchain removed; not used.
 
-# --- Testing & orchestration ---
-pytest==8.3.4
+# --- Notebook execution ---
+ipykernel==6.29.5
+nbformat==5.10.4
 papermill==2.5.0
+
+# --- Testing ---
+pytest==8.3.4
 
 # --- Utilities ---
 tqdm==4.67.1
