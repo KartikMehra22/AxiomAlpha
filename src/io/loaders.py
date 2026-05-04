@@ -1,44 +1,79 @@
 """Single source of truth for every pipeline read.
 
 Every notebook imports from this module instead of using pd.read_csv directly.
-Every loader validates schema and raises PipelineDataError on missing/malformed
-inputs, with a message naming the producer notebook.
+Every loader validates schema and raises a typed error:
+
+  - MissingArtifactError — file does not exist (also a FileNotFoundError)
+  - SchemaError          — file exists but is malformed (also a ValueError)
+
+Both inherit from PipelineDataError, so existing
+`except PipelineDataError` blocks continue to work.
+
+Paths are sourced from `configs.settings` (single source of truth).
 """
 from __future__ import annotations
 
 import json
-import joblib
+import sys
 from pathlib import Path
 
+import joblib
 import numpy as np
 import pandas as pd
 
 
-class PipelineDataError(FileNotFoundError):
-    """Raised when a pipeline artifact is missing or malformed."""
-
-
 def _find_project_root() -> Path:
-    """Walk up from this file until we find the AxiomAlpha directory."""
+    """Walk up from this file looking for the configs/settings.py marker.
+
+    Marker-based (not directory-name based) so the project works under any
+    parent directory or fork name.
+    """
     here = Path(__file__).resolve()
-    for parent in (here, *here.parents):
-        if parent.name == 'AxiomAlpha':
+    for parent in here.parents:
+        if (parent / 'configs' / 'settings.py').exists() and (parent / 'src').is_dir():
             return parent
     raise RuntimeError(
-        f"Could not locate AxiomAlpha project root from {here}"
+        f"Could not locate project root from {here}; expected an ancestor "
+        "directory containing configs/settings.py and src/."
     )
 
 
-PROJECT_ROOT = _find_project_root()
-RAW = PROJECT_ROOT / 'data' / 'raw'
-PROC = PROJECT_ROOT / 'data' / 'processed'
-OUTPUTS = PROJECT_ROOT / 'data' / 'outputs'
+_PROJECT_ROOT = _find_project_root()
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
 
+from configs.settings import (  # noqa: E402  (sys.path setup must precede import)
+    PROJECT_ROOT,
+    DATA_RAW as RAW,
+    DATA_PROC as PROC,
+    DATA_OUT as OUTPUTS,
+)
+
+
+# --- Error hierarchy -------------------------------------------------------
+
+class PipelineDataError(Exception):
+    """Base class for pipeline data errors.
+
+    Catch this to handle both missing-file and schema problems uniformly.
+    For finer-grained handling, catch MissingArtifactError or SchemaError.
+    """
+
+
+class MissingArtifactError(PipelineDataError, FileNotFoundError):
+    """A required pipeline artifact does not exist on disk."""
+
+
+class SchemaError(PipelineDataError, ValueError):
+    """A pipeline artifact exists but does not match its expected schema."""
+
+
+# --- Internal helpers ------------------------------------------------------
 
 def _require(path: Path, *, producer_nb: str) -> Path:
-    """Return path if it exists, else raise PipelineDataError naming producer."""
+    """Return path if it exists, else raise MissingArtifactError."""
     if not path.exists():
-        raise PipelineDataError(
+        raise MissingArtifactError(
             f"Missing pipeline artifact: {path.name}\n"
             f"  Expected at: {path}\n"
             f"  Producer:    {producer_nb}\n"
@@ -50,59 +85,74 @@ def _require(path: Path, *, producer_nb: str) -> Path:
 def _validate(
     df: pd.DataFrame,
     *,
-    required_cols: list[str],
     name: str,
+    required_cols: list[str] = (),
     monotonic_index: bool = False,
+    min_rows: int = 1,
 ) -> pd.DataFrame:
-    """Schema validation; raises PipelineDataError on failure."""
+    """Long-format CSV validation.
+
+    `required_cols` are checked against actual columns ONLY — the index name
+    is intentionally excluded so a producer that wrote `Date` as the index
+    instead of a column is detected, not silently accepted.
+    """
     have = set(df.columns)
-    if df.index.name:
-        have.add(df.index.name)
-    missing = set(required_cols) - have
+    missing = [c for c in required_cols if c not in have]
     if missing:
-        raise PipelineDataError(
-            f"{name}: missing columns {sorted(missing)}. "
+        raise SchemaError(
+            f"{name}: missing columns {missing}. "
             f"Got columns: {list(df.columns)}, index: {df.index.name}"
         )
     if monotonic_index and not df.index.is_monotonic_increasing:
-        raise PipelineDataError(
-            f"{name}: index is not monotonically increasing"
+        raise SchemaError(f"{name}: index is not monotonically increasing")
+    if min_rows and len(df) < min_rows:
+        raise SchemaError(
+            f"{name}: expected at least {min_rows} rows, got {len(df)}"
         )
     return df
 
 
-def load_prices() -> pd.DataFrame:
-    """Daily close prices, wide format (Date index, ticker columns). Producer: NB01."""
-    p = _require(RAW / 'prices.csv', producer_nb='NB01_data_pipeline')
-    df = pd.read_csv(p, index_col='Date', parse_dates=['Date'])
-    df.index = df.index.normalize()  # date-only, drop tz/time
-    return _validate(df, required_cols=[], name='prices', monotonic_index=True)
+def _validate_wide(
+    df: pd.DataFrame, *, name: str, min_cols: int = 1, min_rows: int = 1,
+) -> pd.DataFrame:
+    """Wide-format CSV validation: Date as monotonic index, >= min_cols data columns."""
+    if df.index.name != 'Date':
+        raise SchemaError(
+            f"{name}: expected index name 'Date', got '{df.index.name}'"
+        )
+    if not df.index.is_monotonic_increasing:
+        raise SchemaError(f"{name}: index is not monotonically increasing")
+    if len(df.columns) < min_cols:
+        raise SchemaError(
+            f"{name}: expected at least {min_cols} data columns, "
+            f"got {len(df.columns)}"
+        )
+    if len(df) < min_rows:
+        raise SchemaError(
+            f"{name}: expected at least {min_rows} rows, got {len(df)}"
+        )
+    return df
 
 
-def load_macro() -> pd.DataFrame:
-    """Daily macro factors (VIX, SP500, TNX). Producer: NB01."""
-    p = _require(RAW / 'macro.csv', producer_nb='NB01_data_pipeline')
-    df = pd.read_csv(p, index_col='Date', parse_dates=['Date'])
-    df.index = df.index.normalize()
-    return _validate(df, required_cols=[], name='macro', monotonic_index=True)
-
-
-def load_sector_map() -> dict[str, str]:
-    """Ticker → GICS sector. Producer: NB01."""
-    p = _require(RAW / 'sector_map.json', producer_nb='NB01_data_pipeline')
-    with open(p, encoding='utf-8') as f:
-        sm = json.load(f)
-    if not isinstance(sm, dict):
-        raise PipelineDataError(f"sector_map.json: expected dict, got {type(sm)}")
-    return sm
+def _normalize_date_col(df: pd.DataFrame, name: str) -> pd.DataFrame:
+    """Find any case-variant 'date' column, rename to 'Date', parse to datetime."""
+    date_col = next((c for c in df.columns if c.lower() == 'date'), None)
+    if date_col is None:
+        raise SchemaError(
+            f"{name}: no date column found. Got columns: {list(df.columns)}"
+        )
+    if date_col != 'Date':
+        df = df.rename(columns={date_col: 'Date'})
+    df['Date'] = pd.to_datetime(df['Date']).dt.normalize()
+    return df
 
 
 def _load_wide_csv(path: Path, *, producer_nb: str, name: str) -> pd.DataFrame:
-    """Wide-format CSV: Date as index, no other index columns."""
+    """Wide-format CSV: Date as index, ticker/factor columns."""
     p = _require(path, producer_nb=producer_nb)
     df = pd.read_csv(p, index_col='Date', parse_dates=['Date'])
     df.index = df.index.normalize()
-    return _validate(df, required_cols=[], name=name, monotonic_index=True)
+    return _validate_wide(df, name=name)
 
 
 def _load_long_csv(
@@ -112,18 +162,39 @@ def _load_long_csv(
     """Long-format CSV: Date and ticker as columns (not index)."""
     p = _require(path, producer_nb=producer_nb)
     df = pd.read_csv(p)
-    # Normalise date column name — NB06 emits lowercase 'date'
-    date_col = next((c for c in df.columns if c.lower() == 'date'), None)
-    if date_col and date_col != 'Date':
-        df = df.rename(columns={date_col: 'Date'})
-    if 'Date' in df.columns:
-        df['Date'] = pd.to_datetime(df['Date']).dt.normalize()
+    df = _normalize_date_col(df, name)
     return _validate(
         df,
-        required_cols=['Date', 'ticker'] + (required_cols or []),
         name=name,
+        required_cols=['Date', 'ticker'] + list(required_cols or []),
     )
 
+
+# --- Raw data loaders (NB01) -----------------------------------------------
+
+def load_prices() -> pd.DataFrame:
+    """Daily close prices, wide format (Date index, ticker columns). Producer: NB01."""
+    return _load_wide_csv(RAW / 'prices.csv',
+                          producer_nb='NB01_data_pipeline', name='prices')
+
+
+def load_macro() -> pd.DataFrame:
+    """Daily macro factors (VIX, SP500, TNX). Producer: NB01."""
+    return _load_wide_csv(RAW / 'macro.csv',
+                          producer_nb='NB01_data_pipeline', name='macro')
+
+
+def load_sector_map() -> dict[str, str]:
+    """Ticker → GICS sector. Producer: NB01."""
+    p = _require(RAW / 'sector_map.json', producer_nb='NB01_data_pipeline')
+    with open(p, encoding='utf-8') as f:
+        sm = json.load(f)
+    if not isinstance(sm, dict):
+        raise SchemaError(f"sector_map.json: expected dict, got {type(sm)}")
+    return sm
+
+
+# --- Processing layer (NB02) ----------------------------------------------
 
 def load_log_returns() -> pd.DataFrame:
     return _load_wide_csv(PROC / 'log_returns.csv',
@@ -147,10 +218,11 @@ def load_features_normalized() -> pd.DataFrame:
 
 def load_feature_scaler():
     """Sklearn StandardScaler fitted on training features. Producer: NB02."""
-    p = _require(PROC / 'feature_scaler.pkl',
-                 producer_nb='NB02_data_processing')
+    p = _require(PROC / 'feature_scaler.pkl', producer_nb='NB02_data_processing')
     return joblib.load(p)
 
+
+# --- Quant core (NB03) -----------------------------------------------------
 
 def load_risk_metrics() -> pd.DataFrame:
     return _load_long_csv(PROC / 'risk_metrics.csv',
@@ -162,49 +234,55 @@ def load_regimes() -> pd.DataFrame:
                           producer_nb='NB03_quant_core', name='regimes')
 
 
+# --- Graph engine (NB04) ---------------------------------------------------
+
 def load_mst_edges() -> pd.DataFrame:
     p = _require(PROC / 'mst_edges.csv', producer_nb='NB04_graph_engine')
-    return pd.read_csv(p)
+    df = pd.read_csv(p)
+    return _validate(df, name='mst_edges',
+                     required_cols=['source', 'target', 'weight'])
 
 
 def load_dynamic_graph_metrics() -> pd.DataFrame:
     p = _require(PROC / 'dynamic_graph_metrics.csv',
                  producer_nb='NB04_graph_engine')
     df = pd.read_csv(p)
-    # TODO(Task 17): NB04 will emit 'Date' (capitalized) — remove the
-    # case-insensitive rename below once that lands.
-    date_col = next((c for c in df.columns if c.lower() == 'date'), None)
-    if date_col is None:
-        raise PipelineDataError(
-            "dynamic_graph_metrics: no date column found. "
-            f"Got columns: {list(df.columns)}"
-        )
-    if date_col != 'Date':
-        df = df.rename(columns={date_col: 'Date'})
-    df['Date'] = pd.to_datetime(df['Date']).dt.normalize()
+    df = _normalize_date_col(df, 'dynamic_graph_metrics')
     df = df.set_index('Date')
-    df.index.name = 'Date'
+    return _validate_wide(df, name='dynamic_graph_metrics')
+
+
+# --- Graph analysis (NB05) -------------------------------------------------
+
+def load_centrality_scores() -> pd.DataFrame:
+    """Per-ticker centrality (degree, betweenness, eigenvector, pagerank).
+    First column is the ticker (no header). Index is named 'ticker'."""
+    p = _require(PROC / 'centrality_scores.csv',
+                 producer_nb='NB05_graph_analysis')
+    df = pd.read_csv(p, index_col=0)
+    df.index.name = 'ticker'
     return df
 
 
-def load_centrality_scores() -> pd.DataFrame:
-    p = _require(PROC / 'centrality_scores.csv',
-                 producer_nb='NB05_graph_analysis')
-    return pd.read_csv(p)
-
-
 def load_community_assignments() -> pd.DataFrame:
+    """Per-ticker community labels.
+    Note: NB05 currently writes this without a ticker column header — the
+    first column is the index of community numbers (louvain, girvan_newman,
+    label_prop). TODO(NB05): add explicit 'ticker' column on next pipeline run.
+    """
     p = _require(PROC / 'community_assignments.csv',
                  producer_nb='NB05_graph_analysis')
     return pd.read_csv(p)
 
 
 def load_systemic_risk_scores() -> pd.DataFrame:
-    """Load per-ticker systemic risk scores. Index is ticker (not Date)."""
+    """Per-ticker systemic risk scores. Index is ticker (not Date)."""
     p = _require(PROC / 'systemic_risk_scores.csv',
                  producer_nb='NB05_graph_analysis')
     df = pd.read_csv(p, index_col=0)
     df.index.name = 'ticker'
+    if len(df.columns) < 1:
+        raise SchemaError("systemic_risk_scores: expected at least 1 score column")
     return df
 
 
@@ -232,6 +310,8 @@ def load_graph_intelligence() -> pd.DataFrame:
     return pd.read_csv(p)
 
 
+# --- ML layer (NB06/NB07) --------------------------------------------------
+
 def load_ml_signals() -> pd.DataFrame:
     return _load_long_csv(PROC / 'ml_signals.csv',
                           producer_nb='NB06_ml_models', name='ml_signals')
@@ -239,7 +319,8 @@ def load_ml_signals() -> pd.DataFrame:
 
 def load_models() -> tuple:
     """Returns (model_direction, model_volatility, model_regime). Producer: NB06."""
-    paths = [PROC / f'model_{kind}.pkl' for kind in ('direction', 'volatility', 'regime')]
+    paths = [PROC / f'model_{kind}.pkl'
+             for kind in ('direction', 'volatility', 'regime')]
     for p in paths:
         _require(p, producer_nb='NB06_ml_models')
     return tuple(joblib.load(p) for p in paths)
@@ -260,9 +341,10 @@ def load_signal_explanations() -> dict:
         return json.load(f)
 
 
+# --- NLP / RAG (NB08/NB09) -------------------------------------------------
+
 def load_synthetic_news() -> pd.DataFrame:
     p = _require(RAW / 'synthetic_news.csv', producer_nb='NB08_nlp_sentiment')
-    # parse_dates only if Date column exists (handles both schemas)
     df = pd.read_csv(p)
     date_col = next((c for c in df.columns if c.lower() == 'date'), None)
     if date_col:
@@ -274,14 +356,15 @@ def load_synthetic_news() -> pd.DataFrame:
 
 def load_sentiment_features() -> pd.DataFrame:
     return _load_long_csv(PROC / 'sentiment_features.csv',
-                          producer_nb='NB08_nlp_sentiment', name='sentiment_features')
+                          producer_nb='NB08_nlp_sentiment',
+                          name='sentiment_features')
 
 
 def load_embeddings() -> np.ndarray:
     p = _require(PROC / 'embeddings.npy', producer_nb='NB09_rag_setup')
     arr = np.load(p)
     if arr.ndim != 2:
-        raise PipelineDataError(f"embeddings.npy: expected 2D, got {arr.shape}")
+        raise SchemaError(f"embeddings.npy: expected 2D, got {arr.shape}")
     return arr
 
 
@@ -298,6 +381,8 @@ def load_rag_documents() -> list[dict]:
         return json.load(f)
 
 
+# --- Optimization & backtest (NB11/NB12) -----------------------------------
+
 def load_optimal_weights() -> pd.DataFrame:
     return _load_long_csv(
         PROC / 'optimal_weights.csv',
@@ -312,14 +397,26 @@ def load_equity_curves() -> pd.DataFrame:
 
 
 def load_performance_metrics() -> dict:
+    """Performance metrics from NB12. Returns a dict of metric -> value(s).
+
+    Accepted CSV layouts:
+      - long form with 'metric' and 'value' columns      → {metric: value}
+      - row-per-strategy with 'strategy'/'Strategy' col  → {strategy: {col: value}}
+
+    Raises SchemaError if neither shape is present.
+    """
     p = _require(PROC / 'performance_metrics.csv',
                  producer_nb='NB12_backtesting')
     df = pd.read_csv(p)
-    if {'metric', 'value'}.issubset(df.columns):
-        return dict(zip(df['metric'], df['value']))
-    if df.shape[0] == 1:
-        return df.iloc[0].to_dict()
-    return df.to_dict(orient='list')
+    cols_lower = {c.lower(): c for c in df.columns}
+    if {'metric', 'value'}.issubset(cols_lower):
+        return dict(zip(df[cols_lower['metric']], df[cols_lower['value']]))
+    if 'strategy' in cols_lower:
+        return df.set_index(cols_lower['strategy']).to_dict(orient='index')
+    raise SchemaError(
+        f"performance_metrics: expected 'metric'/'value' or 'strategy' "
+        f"columns, got {list(df.columns)}"
+    )
 
 
 def load_attribution_results() -> pd.DataFrame:
@@ -345,6 +442,8 @@ def load_backtest_results() -> pd.DataFrame:
             df = df.rename(columns={date_col: 'Date'})
     return df
 
+
+# --- Orchestration (NB14) --------------------------------------------------
 
 def load_pipeline_output() -> dict:
     p = _require(PROC / 'pipeline_output.json',

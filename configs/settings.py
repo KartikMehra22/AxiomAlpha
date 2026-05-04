@@ -59,9 +59,15 @@ CVAR_ALPHA = 0.95
 COVAR_SHRINKAGE = 'ledoit_wolf'
 
 # --- Backtest ---
-BACKTEST_REBALANCE = 'M'  # monthly
+BACKTEST_REBALANCE = 'ME'  # month-end (pandas >= 2.2 alias; 'M' is deprecated)
 TRANSACTION_COST_BPS = 5
 INITIAL_CAPITAL = 1_000_000
+
+# Annualized risk-free rate, used for Sharpe / Sortino / Calmar.
+# Roughly the average 3-month T-bill yield over START_DATE..END_DATE.
+# Daily rf = RISK_FREE_RATE / TRADING_DAYS_PER_YEAR.
+RISK_FREE_RATE = 0.04
+TRADING_DAYS_PER_YEAR = 252
 
 # --- Visualization ---
 DARK_BG = '#0d0d0d'

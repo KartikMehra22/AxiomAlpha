@@ -56,3 +56,52 @@ def test_does_not_flag_nb01(tmp_path):
     write_nb(nb, ['import yfinance as yf\nprices = yf.download(...)'])
     errors = check_notebook(nb)
     assert all("from src.io.loaders" not in e for e in errors)
+
+
+def test_flags_full_numpy_random_prefix(tmp_path):
+    """Catch `numpy.random.normal` (full module path), not just `np.random.normal`."""
+    nb = tmp_path / '07_ml_analysis.ipynb'
+    write_nb(nb, [
+        'from src.io.loaders import load_master_signals\n'
+        'import numpy\nx = numpy.random.normal(0, 1, 100)',
+    ])
+    errors = check_notebook(nb)
+    assert any('fabricates' in e for e in errors), errors
+
+
+def test_flags_rng_generator_calls(tmp_path):
+    """Catch `rng = np.random.default_rng(); rng.normal(...)` style."""
+    nb = tmp_path / '11_portfolio_optimization.ipynb'
+    write_nb(nb, [
+        'from src.io.loaders import load_log_returns\n'
+        'import numpy as np\n'
+        'rng = np.random.default_rng(42)\n'
+        'x = rng.normal(0, 1, 100)',
+    ])
+    errors = check_notebook(nb)
+    assert any('rng.* call' in e or 'fabricates' in e for e in errors), errors
+
+
+def test_flags_dirichlet(tmp_path):
+    """np.random.dirichlet is data-fabrication unless tagged for Monte Carlo."""
+    nb = tmp_path / '11_portfolio_optimization.ipynb'
+    write_nb(nb, [
+        'from src.io.loaders import load_log_returns\n'
+        'import numpy as np\n'
+        'w = np.random.dirichlet(np.ones(30))',
+    ])
+    errors = check_notebook(nb)
+    assert any('dirichlet' in e or 'fabricates' in e for e in errors), errors
+
+
+def test_loaders_import_check_ignores_comments(tmp_path):
+    """A docstring or comment containing the loader-import string must NOT
+    satisfy the rule."""
+    nb = tmp_path / '02_data_processing.ipynb'
+    write_nb(nb, [
+        '# from src.io.loaders import load_prices  ← would satisfy substring '
+        'check but no actual import\n'
+        'import pandas as pd\n',
+    ])
+    errors = check_notebook(nb)
+    assert any("from src.io.loaders" in e for e in errors), errors
