@@ -50,3 +50,8 @@ env/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+
+# Orphan dir created by an earlier NB01 save cell that used the wrong relative
+# path. The cell has been removed; this rule is belt-and-braces.
+notebooks/data/
+

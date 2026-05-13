@@ -79,7 +79,7 @@ def seed_everything(seed: int) -> None:
 
 def run_check_pipeline(repo_root: Path) -> int:
     """Run the static notebook check as a pre-gate."""
-    print("▶ Running scripts/check_pipeline.py …")
+    print(">>> Running scripts/check_pipeline.py ...")
     result = subprocess.run(
         [sys.executable, 'scripts/check_pipeline.py'],
         cwd=str(repo_root),
@@ -97,8 +97,8 @@ def main() -> int:
     if not args.skip_check:
         rc = run_check_pipeline(repo_root)
         if rc != 0:
-            print("\n❌ check_pipeline.py failed — fix the violations or "
-                  "re-run with --skip-check.")
+            print("\n[FAIL] check_pipeline.py failed - fix the violations "
+                  "or re-run with --skip-check.")
             return rc
 
     notebooks = NOTEBOOKS
@@ -106,18 +106,18 @@ def main() -> int:
         prefix = normalize_start(args.start_from)
         notebooks = [n for n in NOTEBOOKS if n[:2] >= prefix]
         if not notebooks:
-            print(f"❌ No notebooks at or after {prefix}.")
+            print(f"[FAIL] No notebooks at or after {prefix}.")
             return 1
-        print(f"▶ Resuming from {notebooks[0]}")
+        print(f">>> Resuming from {notebooks[0]}")
 
     total_start = time.time()
     for nb_name in notebooks:
         src = nb_dir / nb_name / f'{nb_name}.ipynb'
         if not src.exists():
-            print(f"❌ Notebook not found: {src}")
+            print(f"[FAIL] Notebook not found: {src}")
             return 1
 
-        print(f"\n{'='*70}\n▶ {nb_name}\n{'='*70}")
+        print(f"\n{'='*70}\n>>> {nb_name}\n{'='*70}")
         t0 = time.time()
         try:
             pm.execute_notebook(
@@ -127,18 +127,18 @@ def main() -> int:
                 cwd=str(src.parent),
             )
         except pm.PapermillExecutionError as e:
-            print(f"\n❌ {nb_name} FAILED:")
+            print(f"\n[FAIL] {nb_name}:")
             cell = getattr(e, 'exec_count', '?')
             ename = getattr(e, 'ename', type(e).__name__)
             evalue = getattr(e, 'evalue', str(e))
             print(f"   Cell {cell}: {ename}: {evalue}")
             return 1
         elapsed = time.time() - t0
-        print(f"✅ {nb_name} OK ({elapsed:.1f}s)")
+        print(f"[ OK ] {nb_name} ({elapsed:.1f}s)")
 
     total = time.time() - total_start
-    print(f"\n🎉 Pipeline complete in {total:.1f}s")
-    print(f"   See data/processed/RESULTS.md")
+    print(f"\n[DONE] Pipeline complete in {total:.1f}s")
+    print(f"       See data/processed/RESULTS.md")
     return 0
 
 

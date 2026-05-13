@@ -1,10 +1,6 @@
 {
-  "avg_auc": 0.5130616082970525,
-  "avg_rmse": 0.4215460039555149,
-  "avg_r2": 0.7726861384234778,
-  "regime_macro_f1": 0.8720253900335383,
-  "regime_accuracy": 0.882748538011696,
-  "best_model_direction": "XGBoost",
-  "best_model_volatility": "XGB_Reg",
-  "best_model_regime": "RF_Regime"
+  "best_model": "xgboost_direction",
+  "avg_ic": 0.21969491554130038,
+  "alpha_ic": 0.24097932062868266,
+  "risk_ic": 0.16330362273642604
 }

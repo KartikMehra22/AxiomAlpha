@@ -113,25 +113,25 @@ def main() -> int:
     repo_root = Path(__file__).resolve().parent.parent
     nb_dir = repo_root / 'notebooks'
     if not nb_dir.is_dir():
-        print(f"❌ notebooks/ not found at {nb_dir}")
+        print(f"[FAIL] notebooks/ not found at {nb_dir}")
         return 1
 
     all_errors: list[str] = []
     nb_paths = sorted(nb_dir.glob('*/*.ipynb'))
     if not nb_paths:
-        print(f"❌ no notebooks found under {nb_dir}")
+        print(f"[FAIL] no notebooks found under {nb_dir}")
         return 1
 
     for nb_path in nb_paths:
         all_errors.extend(check_notebook(nb_path))
 
     if all_errors:
-        print('❌ Pipeline check failed:')
+        print('[FAIL] Pipeline check failed:')
         for e in all_errors:
             print(f'  - {e}')
         return 1
 
-    print(f'✅ All {len(nb_paths)} notebooks pass pipeline check.')
+    print(f'[ OK ] All {len(nb_paths)} notebooks pass pipeline check.')
     return 0
 
 

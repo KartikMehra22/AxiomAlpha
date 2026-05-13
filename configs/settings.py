@@ -10,15 +10,19 @@ DATA_RAW = PROJECT_ROOT / 'data' / 'raw'
 DATA_PROC = PROJECT_ROOT / 'data' / 'processed'
 DATA_OUT = PROJECT_ROOT / 'data' / 'outputs'
 
-# --- Universe (30 tickers) ---
-TICKERS = [
-    'AAPL', 'MSFT', 'NVDA', 'GOOGL', 'META',
-    'JPM', 'BAC', 'GS', 'MS', 'WFC',
-    'JNJ', 'UNH', 'PFE', 'ABBV', 'MRK',
-    'XOM', 'CVX', 'COP', 'SLB', 'EOG',
-    'AMZN', 'TSLA', 'HD', 'MCD', 'NKE',
-    'BA', 'CAT', 'GE', 'MMM', 'UPS',
-]
+# --- Universe (30 tickers, 6 sectors × 5 tickers) ---
+# Single source of truth. NB01 imports STOCK_UNIVERSE from here instead of
+# hardcoding its own copy; data/raw/sector_map.json is regenerated to match.
+STOCK_UNIVERSE = {
+    'Technology':  ['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'META'],
+    'Financials':  ['JPM',  'BAC',  'GS',   'MS',    'WFC'],
+    'Healthcare':  ['JNJ',  'UNH',  'PFE',  'ABBV',  'MRK'],
+    'Energy':      ['XOM',  'CVX',  'COP',  'SLB',   'EOG'],
+    'Consumer':    ['AMZN', 'TSLA', 'HD',   'MCD',   'NKE'],
+    'Industrials': ['BA',   'CAT',  'GE',   'MMM',   'UPS'],
+}
+TICKERS = [t for tickers in STOCK_UNIVERSE.values() for t in tickers]
+SECTOR_MAP = {t: sector for sector, tickers in STOCK_UNIVERSE.items() for t in tickers}
 
 # --- Date range ---
 START_DATE = '2019-01-01'
@@ -60,7 +64,10 @@ COVAR_SHRINKAGE = 'ledoit_wolf'
 
 # --- Backtest ---
 BACKTEST_REBALANCE = 'ME'  # month-end (pandas >= 2.2 alias; 'M' is deprecated)
-TRANSACTION_COST_BPS = 5
+TRANSACTION_COST_BPS = 5      # linear cost per unit of L1 turnover
+SLIPPAGE_BPS = 5              # square-root market-impact coefficient (per asset);
+                              # total slippage = SLIPPAGE_BPS * sum_i |Δw_i|^1.5.
+                              # Set to 0 to disable.
 INITIAL_CAPITAL = 1_000_000
 
 # Annualized risk-free rate, used for Sharpe / Sortino / Calmar.

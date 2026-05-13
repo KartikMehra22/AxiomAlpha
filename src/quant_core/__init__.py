@@ -163,6 +163,7 @@ def compute_portfolio_returns(
     weights_dict: Mapping[pd.Timestamp, pd.Series],
     returns_df: pd.DataFrame,
     transaction_cost: float = 0.0,
+    slippage_coef: float = 0.0,
     rf_annual: float = RISK_FREE_RATE,
     periods: int = TRADING_DAYS_PER_YEAR,
 ) -> pd.Series:
@@ -173,6 +174,14 @@ def compute_portfolio_returns(
     daily risk-free rate (so a regime-overlay strategy that holds cash is
     measured against fully-invested benchmarks fairly). If the series sums
     to >1 (numerical), it is renormalized to 1.
+
+    Cost model per rebalance:
+      cost = transaction_cost * sum_i |Δw_i|
+           + slippage_coef    * sum_i |Δw_i|^1.5
+    The first term is the linear bid/ask + commissions; the second is a
+    square-root market-impact term (Almgren-style), which becomes material
+    on concentrated rebalances. Both are subtracted from the first day of
+    the new holding period.
 
     Returns a daily-return Series.
     """
@@ -201,10 +210,12 @@ def compute_portfolio_returns(
 
         if prev_w is not None:
             common = w.index.intersection(prev_w.index)
-            turnover = float(np.abs(
+            dw = (
                 w.reindex(common).fillna(0) - prev_w.reindex(common).fillna(0)
-            ).sum())
-            cost = turnover * transaction_cost
+            ).abs()
+            turnover = float(dw.sum())
+            impact = float((dw ** 1.5).sum())
+            cost = turnover * transaction_cost + impact * slippage_coef
         else:
             cost = 0.0
 
