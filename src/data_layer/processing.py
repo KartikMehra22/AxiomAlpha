@@ -24,7 +24,20 @@ def compute_log_returns(prices: pd.DataFrame) -> pd.DataFrame:
     """Daily log returns from a wide price DataFrame.
 
     Drops the first row (NaN). Index is preserved.
+
+    Raises ValueError if any non-NaN price is zero or negative — those would
+    silently produce -inf / NaN log returns and corrupt every downstream
+    feature, so we fail loudly at the boundary instead.
     """
+    bad = (prices <= 0) & prices.notna()
+    if bool(bad.any().any()):
+        bad_cols = bad.any()
+        offenders = list(bad_cols[bad_cols].index)
+        raise ValueError(
+            f"compute_log_returns: {int(bad.sum().sum())} non-positive price(s) "
+            f"in columns {offenders}; log returns would be -inf/NaN. Clean the "
+            f"price feed before calling this function."
+        )
     return np.log(prices / prices.shift(1)).dropna(how="all")
 
 
