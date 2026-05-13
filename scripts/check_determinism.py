@@ -80,13 +80,13 @@ def snapshot(proc_dir: Path) -> dict[str, str]:
 
 
 def run_pipeline(repo_root: Path) -> None:
-    print("▶ Running run_all.py --from 02 …")
+    print(">>> Running run_all.py --from 02 ...")
     result = subprocess.run(
         [sys.executable, 'run_all.py', '--from', '02', '--skip-check'],
         cwd=str(repo_root), capture_output=True, text=True,
     )
     if result.returncode != 0:
-        print(f"❌ run_all.py failed:\n{result.stdout}\n{result.stderr}")
+        print(f"[FAIL] run_all.py failed:\n{result.stdout}\n{result.stderr}")
         sys.exit(1)
 
 
@@ -97,7 +97,7 @@ def main() -> int:
     run_pipeline(repo_root)
     before = snapshot(proc)
     if not before:
-        print("❌ no CSVs/NPYs/JSONs in data/processed/ after first run")
+        print("[FAIL] no CSVs/NPYs/JSONs in data/processed/ after first run")
         return 1
 
     run_pipeline(repo_root)
@@ -105,18 +105,18 @@ def main() -> int:
 
     diffs = [k for k in before if before[k] != after.get(k)]
     if diffs:
-        print(f"❌ {len(diffs)} files differ between runs (non-deterministic):")
+        print(f"[FAIL] {len(diffs)} files differ between runs (non-deterministic):")
         for k in diffs:
-            print(f"  - {k}: {before[k][:12]} → {after[k][:12]}")
+            print(f"  - {k}: {before[k][:12]} -> {after[k][:12]}")
         return 1
 
     new_files = sorted(set(after) - set(before))
     if new_files:
-        print(f"⚠️  {len(new_files)} files appeared in run 2 only "
+        print(f"[WARN] {len(new_files)} files appeared in run 2 only "
               f"(non-deterministic file set): {new_files}")
         return 1
 
-    print(f"✅ All {len(before)} CSV/NPY/JSON artifacts are bit-identical "
+    print(f"[ OK ] All {len(before)} CSV/NPY/JSON artifacts are bit-identical "
           "across runs.")
     return 0
 
