@@ -300,3 +300,139 @@ class TestSrcQuantCoreParity:
         assert r_full.mean() == pytest.approx(0.01, rel=1e-9)
         assert r_half.mean() == pytest.approx(0.005, rel=1e-9)
         assert r_full.mean() != r_half.mean()  # the bug fix proof
+
+
+# --- Cost model: linear + square-root market impact ------------------------
+
+class TestSlippageModel:
+    """Pins compute_portfolio_returns's two-term cost model:
+        cost = transaction_cost * sum_i |Δw_i|              (linear)
+             + slippage_coef    * sum_i |Δw_i|^1.5          (sqrt impact)
+    """
+
+    @staticmethod
+    def _two_rebalance_setup():
+        from src.quant_core import compute_portfolio_returns  # noqa: F401
+        idx = pd.date_range('2024-01-01', periods=10, freq='B')
+        rets = pd.DataFrame({
+            'A': np.zeros(10),
+            'B': np.zeros(10),
+        }, index=idx)
+        # Two rebalances → one turnover step.
+        # Δw_A = |0.6 - 0.5| = 0.1; Δw_B = |0.4 - 0.5| = 0.1 → sum=0.2
+        weights = {
+            idx[0]: pd.Series([0.5, 0.5], index=['A', 'B']),
+            idx[5]: pd.Series([0.6, 0.4], index=['A', 'B']),
+        }
+        return rets, weights
+
+    def test_zero_costs_gives_zero_drag(self):
+        from src.quant_core import compute_portfolio_returns
+        rets, weights = self._two_rebalance_setup()
+        r = compute_portfolio_returns(weights, rets,
+                                     transaction_cost=0.0,
+                                     slippage_coef=0.0,
+                                     rf_annual=0.0)
+        # Returns are all zero, no costs → every entry zero.
+        assert (r == 0.0).all()
+
+    def test_linear_cost_subtracts_only_turnover_times_bps(self):
+        from src.quant_core import compute_portfolio_returns
+        rets, weights = self._two_rebalance_setup()
+        TC = 0.001  # 10 bps
+        r = compute_portfolio_returns(weights, rets,
+                                     transaction_cost=TC,
+                                     slippage_coef=0.0,
+                                     rf_annual=0.0)
+        # Total drag across the run is exactly turnover * TC = 0.2 * 0.001 = 2e-4,
+        # applied on the first day of the second period.
+        assert r.sum() == pytest.approx(-0.2 * TC, rel=1e-9)
+
+    def test_slippage_term_is_convex_in_per_asset_size(self):
+        """slippage_coef * sum_i |Δw_i|^1.5. For Δw_A=Δw_B=0.1, the contribution
+        is 2 * 0.1**1.5 = 2 * 0.0316... = 0.06324...
+        """
+        from src.quant_core import compute_portfolio_returns
+        rets, weights = self._two_rebalance_setup()
+        SLIP = 0.01
+        r = compute_portfolio_returns(weights, rets,
+                                     transaction_cost=0.0,
+                                     slippage_coef=SLIP,
+                                     rf_annual=0.0)
+        expected = -SLIP * (0.1 ** 1.5 + 0.1 ** 1.5)
+        assert r.sum() == pytest.approx(expected, rel=1e-9)
+
+    def test_one_big_trade_beats_many_small_trades_under_slippage(self):
+        """Convexity is the whole point of the sqrt model: a single 0.2 step
+        costs more in impact than two 0.1 steps. (Linear costs would be equal.)
+        """
+        from src.quant_core import compute_portfolio_returns
+        idx = pd.date_range('2024-01-01', periods=20, freq='B')
+        rets = pd.DataFrame({'A': np.zeros(20)}, index=idx)
+        SLIP = 0.01
+
+        # Path 1: one big 0.2 rebalance.
+        weights_big = {
+            idx[0]:  pd.Series([1.0], index=['A']),
+            idx[10]: pd.Series([0.8], index=['A']),
+        }
+        # Path 2: two 0.1 rebalances summing to the same 0.2 total turnover.
+        weights_split = {
+            idx[0]:  pd.Series([1.0], index=['A']),
+            idx[5]:  pd.Series([0.9], index=['A']),
+            idx[10]: pd.Series([0.8], index=['A']),
+        }
+        r_big   = compute_portfolio_returns(weights_big,   rets,
+                                           transaction_cost=0.0,
+                                           slippage_coef=SLIP, rf_annual=0.0)
+        r_split = compute_portfolio_returns(weights_split, rets,
+                                           transaction_cost=0.0,
+                                           slippage_coef=SLIP, rf_annual=0.0)
+        # 0.2^1.5 ≈ 0.0894;  2 * 0.1^1.5 ≈ 0.0632 — concentrated is more expensive.
+        assert r_big.sum() < r_split.sum(), \
+            f"sqrt impact should penalize concentration: big={r_big.sum()}, split={r_split.sum()}"
+
+
+# --- Shorts toggle (OPT_LONG_ONLY=False codepath) --------------------------
+
+class TestShortsEnabled:
+    """Smoke-tests that compute_portfolio_returns handles a long/short weight
+    series (some entries negative, sum=1.0) end-to-end without crashing,
+    and that the turnover calc treats short legs symmetrically with longs.
+    """
+
+    def test_long_short_dot_product_matches_manual(self):
+        from src.quant_core import compute_portfolio_returns
+        idx = pd.date_range('2024-01-01', periods=5, freq='B')
+        rets = pd.DataFrame({
+            'A': np.full(5, 0.02),   # +2% daily
+            'B': np.full(5, -0.01),  # -1% daily
+        }, index=idx)
+        # Long A, short B — sum=1.0 so no cash residual.
+        w = pd.Series([1.2, -0.2], index=['A', 'B'])
+        r = compute_portfolio_returns({idx[0]: w}, rets,
+                                     transaction_cost=0.0,
+                                     slippage_coef=0.0,
+                                     rf_annual=0.0)
+        # daily = 1.2 * 0.02 + (-0.2) * (-0.01) = 0.024 + 0.002 = 0.026
+        assert r.mean() == pytest.approx(0.026, rel=1e-9)
+
+    def test_short_leg_counts_toward_turnover(self):
+        """Going from (1.2, -0.2) to (0.8, 0.2) is |Δ|=0.4+0.4=0.8 turnover,
+        even though both sides cross zero."""
+        from src.quant_core import compute_portfolio_returns
+        idx = pd.date_range('2024-01-01', periods=10, freq='B')
+        rets = pd.DataFrame({
+            'A': np.zeros(10),
+            'B': np.zeros(10),
+        }, index=idx)
+        TC = 0.001
+        weights = {
+            idx[0]: pd.Series([1.2, -0.2], index=['A', 'B']),
+            idx[5]: pd.Series([0.8,  0.2], index=['A', 'B']),
+        }
+        r = compute_portfolio_returns(weights, rets,
+                                     transaction_cost=TC,
+                                     slippage_coef=0.0,
+                                     rf_annual=0.0)
+        assert r.sum() == pytest.approx(-0.8 * TC, rel=1e-9)
