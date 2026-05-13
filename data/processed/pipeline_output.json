@@ -43,10 +43,10 @@
   "data_valid": true,
   "quant_summary": {
     "current_regime_encoded": 1,
-    "mean_garch_vol": 1.7034052547975753,
-    "mean_var_95": -0.031318301846547755,
-    "mean_cvar_95": -0.04980987012754286,
-    "mean_downside_vol": 0.2627720526482837
+    "mean_garch_vol": 1.7034052025655002,
+    "mean_var_95": -0.03131829884133838,
+    "mean_cvar_95": -0.0498098677918041,
+    "mean_downside_vol": 0.26277203609654864
   },
   "graph_summary": {
     "top_systemic_tickers": [
@@ -56,41 +56,41 @@
       },
       {
         "ticker": "GS",
-        "score": 85.80409081466733
+        "score": 85.80408133544715
       },
       {
         "ticker": "MCD",
-        "score": 81.49756609373507
+        "score": 81.4975513606939
       },
       {
         "ticker": "BAC",
-        "score": 80.02594949853747
+        "score": 80.02594184897254
       },
       {
         "ticker": "JPM",
-        "score": 79.77929857633154
+        "score": 79.7792801271528
       }
     ],
     "top_pagerank_tickers": [
       {
         "ticker": "MS",
-        "pagerank": 0.055306867460865
+        "pagerank": 0.0553068774911184
       },
       {
         "ticker": "GS",
-        "pagerank": 0.0541669584277942
+        "pagerank": 0.0541669507757822
       },
       {
         "ticker": "BAC",
-        "pagerank": 0.0527709908004986
+        "pagerank": 0.0527709862684028
       },
       {
         "ticker": "JPM",
-        "pagerank": 0.0523162744717138
+        "pagerank": 0.0523162499473884
       },
       {
         "ticker": "HD",
-        "pagerank": 0.0432366150340284
+        "pagerank": 0.0432366426703593
       }
     ]
   },
@@ -98,24 +98,24 @@
     "as_of": "2024-12-27",
     "top_long_signals": [
       {
-        "ticker": "TSLA",
-        "p_up": 0.5692028
-      },
-      {
         "ticker": "GS",
-        "p_up": 0.5560774
+        "p_up": 0.5594877
       },
       {
         "ticker": "NKE",
-        "p_up": 0.55017877
+        "p_up": 0.5498847
+      },
+      {
+        "ticker": "CVX",
+        "p_up": 0.530905
+      },
+      {
+        "ticker": "WFC",
+        "p_up": 0.529043
       },
       {
         "ticker": "UNH",
-        "p_up": 0.5373797
-      },
-      {
-        "ticker": "COP",
-        "p_up": 0.5287905
+        "p_up": 0.52848667
       }
     ]
   },
@@ -215,23 +215,23 @@
       },
       {
         "ticker": "META",
-        "weight": 0.1395373248945267
+        "weight": 0.1395425804902677
       },
       {
         "ticker": "AMZN",
-        "weight": 0.0700944457839736
+        "weight": 0.0700925095691588
       },
       {
         "ticker": "UPS",
-        "weight": 0.033569247650191
+        "weight": 0.0335663644777293
       },
       {
         "ticker": "XOM",
-        "weight": 0.0067989816715232
+        "weight": 0.0067985454629215
       },
       {
-        "ticker": "SLB",
-        "weight": 6.75087434406576e-13
+        "ticker": "EOG",
+        "weight": 2.072040700292961e-13
       }
     ],
     "cash_pct": 0.0,

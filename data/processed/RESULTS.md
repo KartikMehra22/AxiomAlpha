@@ -1,5 +1,5 @@
 # AxiomAlpha — Live Pipeline Results
-_Generated: 2026-05-13T11:23:27+00:00_
+_Generated: 2026-05-13T11:50:39+00:00_
 
 ## Backtest (2019-01-03 → 2024-12-30, 1508 days)
 

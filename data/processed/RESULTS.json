@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-13T11:23:27+00:00",
+  "generated_at": "2026-05-13T11:50:39+00:00",
   "data_period": "2019-01-03 \u2192 2024-12-30",
   "n_trading_days": 1508,
   "sharpe": 0.7534,
@@ -8,5 +8,5 @@
   "sharpe_eq_weight": 0.677,
   "sharpe_markowitz": 0.8315,
   "n_rebalances": 60,
-  "sentiment_ic_lagged": -0.020080069242294028
+  "sentiment_ic_lagged": -0.020080053060432423
 }
