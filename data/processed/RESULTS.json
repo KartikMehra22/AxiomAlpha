@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-05-04T06:21:08+00:00",
+  "generated_at": "2026-05-13T10:58:37+00:00",
   "data_period": "2019-01-03 \u2192 2024-12-30",
   "n_trading_days": 1508,
-  "sharpe": 1.0916,
-  "annualized_return": 0.1852,
-  "max_drawdown": -0.194,
-  "sharpe_eq_weight": 0.7425,
-  "sharpe_markowitz": 0.9927,
+  "sharpe": 0.9569,
+  "annualized_return": 0.1725,
+  "max_drawdown": -0.2016,
+  "sharpe_eq_weight": 0.677,
+  "sharpe_markowitz": 0.8343,
   "n_rebalances": 60,
-  "sentiment_ic_lagged": -0.007488348088754056
+  "sentiment_ic_lagged": -0.0200800665038528
 }
