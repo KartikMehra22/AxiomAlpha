@@ -64,7 +64,10 @@ COVAR_SHRINKAGE = 'ledoit_wolf'
 
 # --- Backtest ---
 BACKTEST_REBALANCE = 'ME'  # month-end (pandas >= 2.2 alias; 'M' is deprecated)
-TRANSACTION_COST_BPS = 5
+TRANSACTION_COST_BPS = 5      # linear cost per unit of L1 turnover
+SLIPPAGE_BPS = 5              # square-root market-impact coefficient (per asset);
+                              # total slippage = SLIPPAGE_BPS * sum_i |Δw_i|^1.5.
+                              # Set to 0 to disable.
 INITIAL_CAPITAL = 1_000_000
 
 # Annualized risk-free rate, used for Sharpe / Sortino / Calmar.
