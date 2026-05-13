@@ -83,11 +83,19 @@ def annualized_sortino(
 
 
 def max_drawdown(equity_curve: Iterable[float]) -> float:
-    """Max drawdown as a non-positive fraction. -0.20 = a 20% peak-to-trough."""
+    """Max drawdown as a non-positive fraction. -0.20 = a 20% peak-to-trough.
+
+    Returns NaN if the curve is empty or the running maximum is ever
+    non-positive (which would produce inf/-inf in the percentage drop).
+    Callers seeded from `cumprod(1 + r)` always start at 1.0, so this guard
+    is defensive against malformed input rather than a hot path.
+    """
     eq = np.asarray(list(equity_curve), dtype=float)
     if eq.size == 0:
         return float("nan")
     running_max = np.maximum.accumulate(eq)
+    if not np.all(running_max > 0):
+        return float("nan")
     return float(((eq - running_max) / running_max).min())
 
 
@@ -181,6 +189,15 @@ def compute_portfolio_returns(
         else:
             cash_pct = max(0.0, 1.0 - w_sum)
         next_rebal = dates[i + 1] if i + 1 < len(dates) else returns_df.index[-1]
+
+        missing = [t for t in w.index if t not in returns_df.columns]
+        if missing:
+            raise KeyError(
+                f"compute_portfolio_returns: weight tickers not in returns_df "
+                f"on rebal date {rebal.date() if hasattr(rebal, 'date') else rebal}: "
+                f"{missing}. Align the weight Series to the returns universe "
+                f"(use .reindex(returns_df.columns).fillna(0)) before calling."
+            )
 
         if prev_w is not None:
             common = w.index.intersection(prev_w.index)
