@@ -32,6 +32,9 @@ matplotlib==3.10.0
 seaborn==0.13.2
 plotly==6.5.2
 
+# --- Streamlit showcase (streamlit_app.py + pages/) ---
+streamlit==1.45.1
+
 # --- Dimensionality reduction ---
 umap-learn==0.5.3
 
