@@ -1,12 +1,13 @@
 {
-  "generated_at": "2026-05-13T11:50:39+00:00",
-  "data_period": "2019-01-03 \u2192 2024-12-30",
-  "n_trading_days": 1508,
-  "sharpe": 0.7534,
-  "annualized_return": 0.1565,
-  "max_drawdown": -0.2249,
-  "sharpe_eq_weight": 0.677,
-  "sharpe_markowitz": 0.8315,
-  "n_rebalances": 60,
-  "sentiment_ic_lagged": -0.020080053060432423
+  "generated_at": "2026-11-19T17:37:35+00:00",
+  "data_period": "2020-07-01 \u2192 2024-12-30",
+  "n_trading_days": 1132,
+  "sharpe": 1.0123,
+  "annualized_return": 0.1799,
+  "max_drawdown": -0.109,
+  "sharpe_eq_weight": 1.1186,
+  "sharpe_markowitz": 1.1294,
+  "n_rebalances": 54,
+  "ml_direction_auc": 0.5086410309324524,
+  "sentiment_ic_lagged": -0.04243018143844389
 }

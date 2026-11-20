@@ -1,26 +1,5 @@
 {
-    "status": "Finalized",
-    "confidence": 0.85,
-    "top_allocations": [
-        {
-            "ticker": "AAPL",
-            "weight": 0.03333333333333333
-        },
-        {
-            "ticker": "ABBV",
-            "weight": 0.03333333333333333
-        },
-        {
-            "ticker": "AMZN",
-            "weight": 0.03333333333333333
-        },
-        {
-            "ticker": "BA",
-            "weight": 0.03333333333333333
-        },
-        {
-            "ticker": "BAC",
-            "weight": 0.03333333333333333
-        }
-    ]
+  "status": "inputs_checked",
+  "confidence": null,
+  "top_allocations": []
 }

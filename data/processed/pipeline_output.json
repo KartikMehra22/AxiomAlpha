@@ -42,11 +42,12 @@
   },
   "data_valid": true,
   "quant_summary": {
-    "current_regime_encoded": 1,
-    "mean_garch_vol": 1.7034052025655002,
+    "current_regime_encoded": 0,
+    "mean_garch_vol": 1.7034050992350538,
     "mean_var_95": -0.03131829884133838,
     "mean_cvar_95": -0.0498098677918041,
-    "mean_downside_vol": 0.26277203609654864
+    "mean_downside_vol": 0.26277203609654864,
+    "current_regime_name": "Bear"
   },
   "graph_summary": {
     "top_systemic_tickers": [
@@ -95,60 +96,62 @@
     ]
   },
   "ml_summary": {
-    "as_of": "2024-12-27",
+    "as_of": "2024-12-20",
+    "training_end": "2024-01-22",
     "top_long_signals": [
       {
-        "ticker": "GS",
-        "p_up": 0.5594877
+        "ticker": "BA",
+        "p_up": 0.4678119907073388
       },
       {
-        "ticker": "NKE",
-        "p_up": 0.5498847
+        "ticker": "GOOGL",
+        "p_up": 0.4632925020115169
       },
       {
-        "ticker": "CVX",
-        "p_up": 0.530905
+        "ticker": "TSLA",
+        "p_up": 0.4622260350921547
       },
       {
-        "ticker": "WFC",
-        "p_up": 0.529043
+        "ticker": "AMZN",
+        "p_up": 0.4563959418430551
       },
       {
-        "ticker": "UNH",
-        "p_up": 0.52848667
+        "ticker": "META",
+        "p_up": 0.4532340449893468
       }
     ]
   },
   "nlp_summary": {
+    "source": "synthetic; not used for allocation",
     "avg_sentiment_30d": {
-      "AAPL": -0.8815218154340982,
-      "ABBV": 0.9310416495427488,
-      "AMZN": -0.6109370405320079,
-      "BA": 0.4675806473940611,
-      "BAC": -0.4523645672015846,
-      "CAT": -0.2806836391488711,
-      "COP": 0.7005710899829865,
-      "CVX": -0.9586373046040536,
-      "EOG": 0.9402494933456182,
-      "GE": -0.28208935757478076,
-      "GOOGL": -0.9120461395941675,
-      "GS": 0.21139111630618573,
-      "HD": 0.7557843565009534,
-      "JNJ": 0.927717311307788,
-      "JPM": 0.029613114893436432,
-      "META": -0.07307951021939521,
-      "MMM": -0.062410470098257065,
-      "MRK": -0.3265908109024167,
-      "MS": -0.21884831289450327,
-      "MSFT": -0.32380175466338784,
-      "NKE": -0.961517765186727,
-      "NVDA": -0.007406658803423283,
-      "SLB": -0.31073881747821963,
-      "TSLA": -0.46993085951544344,
-      "UNH": -0.4274770589545369,
-      "UPS": -0.7149641141295433,
-      "WFC": 0.014731009025126696,
-      "XOM": -0.9415851340939599
+      "AAPL": -0.8815218997187912,
+      "ABBV": 0.9310417147353292,
+      "AMZN": -0.6109366165474057,
+      "BA": 0.4675807271152735,
+      "BAC": -0.4523645513691008,
+      "CAT": -0.2806848386923472,
+      "COP": 0.7005707956850529,
+      "CVX": -0.9586373707279564,
+      "EOG": 0.9402494560927152,
+      "GE": -0.28209004799524945,
+      "GOOGL": -0.9120460189878941,
+      "GS": 0.2113905105739832,
+      "HD": 0.7557850196026266,
+      "JNJ": 0.92771730478853,
+      "JPM": 0.029611781239509583,
+      "META": -0.07307998575270178,
+      "MMM": -0.06241472437977791,
+      "MRK": -0.32659099902957683,
+      "MS": -0.2188491405298313,
+      "MSFT": -0.32380195458730066,
+      "NKE": -0.9615178881213068,
+      "NVDA": -0.007407919193307598,
+      "SLB": -0.31073880195617676,
+      "TSLA": -0.469930900959298,
+      "UNH": -0.4274781080894172,
+      "UPS": -0.7149667218327522,
+      "WFC": 0.014730572234839173,
+      "XOM": -0.9415851479085783
     },
     "most_positive": "EOG",
     "most_negative": "NKE"
@@ -156,85 +159,86 @@
   "risk_audit": {
     "perf_dict": {
       "Equal Weight": {
-        "ann_return": 0.198,
-        "ann_vol": 0.2334,
-        "sharpe": 0.677,
-        "sortino": 0.6412,
-        "calmar": 0.4748,
-        "max_dd": -0.417,
-        "var_95": 0.0194,
-        "cvar_95": 0.0349,
-        "n_days": 1239.0
+        "ann_return": 0.233,
+        "ann_vol": 0.1725,
+        "sharpe": 1.1186,
+        "sortino": 1.6279,
+        "calmar": 1.1603,
+        "max_dd": -0.2008,
+        "var_95": 0.0178,
+        "cvar_95": 0.0244,
+        "n_days": 1132.0
       },
       "Markowitz": {
-        "ann_return": 0.23,
-        "ann_vol": 0.2285,
-        "sharpe": 0.8315,
-        "sortino": 0.7794,
-        "calmar": 0.6109,
-        "max_dd": -0.3765,
-        "var_95": 0.0196,
-        "cvar_95": 0.0338,
-        "n_days": 1239.0
+        "ann_return": 0.24,
+        "ann_vol": 0.1771,
+        "sharpe": 1.1294,
+        "sortino": 1.6317,
+        "calmar": 1.6993,
+        "max_dd": -0.1413,
+        "var_95": 0.0171,
+        "cvar_95": 0.0249,
+        "n_days": 1132.0
       },
       "AxiomAlpha": {
-        "ann_return": 0.1565,
-        "ann_vol": 0.1546,
-        "sharpe": 0.7534,
-        "sortino": 0.7027,
-        "calmar": 0.6959,
-        "max_dd": -0.2249,
-        "var_95": 0.0147,
-        "cvar_95": 0.0229,
-        "n_days": 1239.0
+        "ann_return": 0.1799,
+        "ann_vol": 0.1382,
+        "sharpe": 1.0123,
+        "sortino": 1.4464,
+        "calmar": 1.6504,
+        "max_dd": -0.109,
+        "var_95": 0.0135,
+        "cvar_95": 0.0194,
+        "n_days": 1132.0
       }
-    }
+    },
+    "allocation_errors": []
   },
   "strategy_decision": {
     "as_of": "2024-12-30",
     "top_holdings": [
       {
+        "ticker": "AAPL",
+        "weight": 0.05
+      },
+      {
         "ticker": "ABBV",
-        "weight": 0.15
+        "weight": 0.05
       },
       {
-        "ticker": "JNJ",
-        "weight": 0.15
+        "ticker": "GE",
+        "weight": 0.05
       },
       {
-        "ticker": "MRK",
-        "weight": 0.15
+        "ticker": "JPM",
+        "weight": 0.05
       },
       {
-        "ticker": "PFE",
-        "weight": 0.15
+        "ticker": "MMM",
+        "weight": 0.05
       },
       {
-        "ticker": "TSLA",
-        "weight": 0.15
+        "ticker": "NVDA",
+        "weight": 0.05
+      },
+      {
+        "ticker": "WFC",
+        "weight": 0.05
       },
       {
         "ticker": "META",
-        "weight": 0.1395425804902677
+        "weight": 0.0499999999999999
       },
       {
-        "ticker": "AMZN",
-        "weight": 0.0700925095691588
+        "ticker": "GS",
+        "weight": 0.0466306938321963
       },
       {
-        "ticker": "UPS",
-        "weight": 0.0335663644777293
-      },
-      {
-        "ticker": "XOM",
-        "weight": 0.0067985454629215
-      },
-      {
-        "ticker": "EOG",
-        "weight": 2.072040700292961e-13
+        "ticker": "GOOGL",
+        "weight": 0.0314430303860862
       }
     ],
-    "cash_pct": 0.0,
+    "cash_pct": 0.5,
     "rationale": "Templated explanation: position sized by AxiomAlpha optimizer (see NB11). Regime overlay and systemic-risk penalty are baked into the weights. Risk audit: no guardrail breaches."
   },
   "aborted": false,

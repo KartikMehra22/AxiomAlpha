@@ -1,3 +1,92 @@
 {
-    "AAPL": "STRONG BUY \u2014 AAPL:\n   Rationale & Analysis Insights:\n   - ML Signal: 0.72 (direction_prob=65%). High conviction driven by strong historical momentum features.\n   - Sentiment: +0.45 (positive, high confidence). Fueled by recent positive earnings guidance and product announcements.\n   - Regime: Bull (78% confidence). Favorable macro environment allows for aggressive positioning.\n   - Network Graph Analysis: Degree centrality = 0.6. AAPL sits at the center of the sector co-movement cluster, serving as a stable anchor.\n   - Risk Profile: Vol forecast = 18% | VaR99 = -2.1%. Below sector average, providing a safe risk-adjusted entry point.\n   - Systemic Risk Score: 45/100 (moderate). No imminent macro fears detected in the broad news flow."
+  "AAPL": {
+    "avg_alpha": 0.5173232061026547
+  },
+  "ABBV": {
+    "avg_alpha": 0.5189571717728055
+  },
+  "AMZN": {
+    "avg_alpha": 0.5137007761231279
+  },
+  "BA": {
+    "avg_alpha": 0.5055901405229974
+  },
+  "BAC": {
+    "avg_alpha": 0.5143205905756161
+  },
+  "CAT": {
+    "avg_alpha": 0.5167811438902518
+  },
+  "COP": {
+    "avg_alpha": 0.5139084877996244
+  },
+  "CVX": {
+    "avg_alpha": 0.5164800049456887
+  },
+  "EOG": {
+    "avg_alpha": 0.5130431183179003
+  },
+  "GE": {
+    "avg_alpha": 0.5140092991268471
+  },
+  "GOOGL": {
+    "avg_alpha": 0.5164028106667325
+  },
+  "GS": {
+    "avg_alpha": 0.5165571370810632
+  },
+  "HD": {
+    "avg_alpha": 0.5180078405210435
+  },
+  "JNJ": {
+    "avg_alpha": 0.5178291729256023
+  },
+  "JPM": {
+    "avg_alpha": 0.5173680766429866
+  },
+  "MCD": {
+    "avg_alpha": 0.5221704007539996
+  },
+  "META": {
+    "avg_alpha": 0.5122852172936069
+  },
+  "MMM": {
+    "avg_alpha": 0.5124729017908398
+  },
+  "MRK": {
+    "avg_alpha": 0.51655856452949
+  },
+  "MS": {
+    "avg_alpha": 0.5162802260246042
+  },
+  "MSFT": {
+    "avg_alpha": 0.5170753390939141
+  },
+  "NKE": {
+    "avg_alpha": 0.5095301635708072
+  },
+  "NVDA": {
+    "avg_alpha": 0.5145206740825006
+  },
+  "PFE": {
+    "avg_alpha": 0.5107532335656407
+  },
+  "SLB": {
+    "avg_alpha": 0.5090893702365089
+  },
+  "TSLA": {
+    "avg_alpha": 0.5096488737273254
+  },
+  "UNH": {
+    "avg_alpha": 0.5192131344366581
+  },
+  "UPS": {
+    "avg_alpha": 0.5129023388493844
+  },
+  "WFC": {
+    "avg_alpha": 0.5141493141467149
+  },
+  "XOM": {
+    "avg_alpha": 0.5141606411045042
+  }
 }

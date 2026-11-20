@@ -1,6 +1,14 @@
 {
-  "best_model": "xgboost_direction",
-  "avg_ic": 0.21969491554130038,
-  "alpha_ic": 0.24097932062868266,
-  "risk_ic": 0.16330362273642604
+  "avg_auc": 0.5086410309324524,
+  "avg_rmse": 0.00991083866002803,
+  "avg_r2": 0.1501499851133607,
+  "regime_macro_f1": 0.2520453440640288,
+  "regime_accuracy": 0.32872246696035246,
+  "best_model_direction": "LR_Raw",
+  "best_model_volatility": "Ridge",
+  "best_model_regime": "RF_Regime",
+  "signal_evaluation_scope": "walk-forward fixed models; model selection and broader robustness not validated",
+  "avg_ic": 0.004453733472082669,
+  "alpha_ic": 0.007566914908336238,
+  "risk_ic": 0.24047241436866337
 }

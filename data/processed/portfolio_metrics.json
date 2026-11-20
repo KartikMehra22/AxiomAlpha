@@ -1,6 +1,8 @@
 {
-    "simulated_sharpe": 0.8752348348206754,
-    "max_drawdown": -0.31147852858127145,
-    "cvar_95": -0.20463494027958953,
-    "as_of": "2024-12-30"
+  "as_of": "2024-12-30",
+  "regime": "Bear",
+  "cash_pct": 0.5,
+  "signal_scale_daily": 0.001,
+  "method": "shared point-in-time optimizer",
+  "sentiment_used": false
 }

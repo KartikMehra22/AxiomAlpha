@@ -1,0 +1,5 @@
+{
+  "source": "synthetic",
+  "uses_same_day_returns": true,
+  "scorer": "finbert"
+}
