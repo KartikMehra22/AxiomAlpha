@@ -1,6 +1,6 @@
 """Verify the pipeline is deterministic from NB02 onward.
 
-NB01 is excluded because it hits yfinance/FRED — external APIs that may
+NB01 is excluded because it calls yfinance — external APIs that may
 return slightly different bytes across calls (split adjustments, backfills).
 For determinism we hold `data/raw/prices.csv` constant and re-run NB02-15.
 
@@ -25,6 +25,7 @@ Run: python scripts/check_determinism.py
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import subprocess
@@ -79,10 +80,13 @@ def snapshot(proc_dir: Path) -> dict[str, str]:
     return out
 
 
-def run_pipeline(repo_root: Path) -> None:
+def run_pipeline(repo_root: Path, *, direct: bool = False) -> None:
     print(">>> Running run_all.py --from 02 ...")
+    command = [sys.executable, 'run_all.py', '--from', '02', '--skip-check']
+    if direct:
+        command.append('--direct')
     result = subprocess.run(
-        [sys.executable, 'run_all.py', '--from', '02', '--skip-check'],
+        command,
         cwd=str(repo_root), capture_output=True, text=True,
     )
     if result.returncode != 0:
@@ -91,16 +95,19 @@ def run_pipeline(repo_root: Path) -> None:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--direct', action='store_true', help='Use the kernel-free notebook runner')
+    args = parser.parse_args()
     repo_root = Path(__file__).resolve().parent.parent
     proc = repo_root / 'data' / 'processed'
 
-    run_pipeline(repo_root)
+    run_pipeline(repo_root, direct=args.direct)
     before = snapshot(proc)
     if not before:
         print("[FAIL] no CSVs/NPYs/JSONs in data/processed/ after first run")
         return 1
 
-    run_pipeline(repo_root)
+    run_pipeline(repo_root, direct=args.direct)
     after = snapshot(proc)
 
     diffs = [k for k in before if before[k] != after.get(k)]

@@ -54,6 +54,8 @@ def parse_args():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--from', dest='start_from', default=None,
                     help='Resume from this notebook prefix (e.g. "06" or "6").')
+    ap.add_argument('--direct', action='store_true', help='Execute Python cells in isolated subprocesses without a Jupyter kernel.')
+    ap.add_argument('--through', default=None, help='Stop after this notebook prefix, e.g. 12.')
     ap.add_argument('--skip-check', action='store_true',
                     help='Skip the scripts/check_pipeline.py gate.')
     return ap.parse_args()
@@ -110,6 +112,12 @@ def main() -> int:
             return 1
         print(f">>> Resuming from {notebooks[0]}")
 
+    if args.through:
+        stop = normalize_start(args.through)
+        notebooks = [n for n in notebooks if n[:2] <= stop]
+        if not notebooks:
+            raise SystemExit("--through must not precede --from")
+
     total_start = time.time()
     for nb_name in notebooks:
         src = nb_dir / nb_name / f'{nb_name}.ipynb'
@@ -120,12 +128,19 @@ def main() -> int:
         print(f"\n{'='*70}\n>>> {nb_name}\n{'='*70}")
         t0 = time.time()
         try:
-            pm.execute_notebook(
+            if args.direct:
+                subprocess.run([sys.executable, str(repo_root / 'scripts/execute_notebook_direct.py'), str(src)],
+                               cwd=str(src.parent), check=True)
+            else:
+                pm.execute_notebook(
                 str(src), str(src),  # in-place
                 kernel_name='python3',
                 progress_bar=False,
-                cwd=str(src.parent),
-            )
+                    cwd=str(src.parent),
+                )
+        except subprocess.CalledProcessError as e:
+            print(f'\n[FAIL] {nb_name}: direct execution exited {e.returncode}')
+            return e.returncode
         except pm.PapermillExecutionError as e:
             print(f"\n[FAIL] {nb_name}:")
             cell = getattr(e, 'exec_count', '?')
