@@ -51,7 +51,7 @@ def annualized_sortino(daily_returns: np.ndarray, rf_annual: float, periods: int
     downside = excess[excess < 0]
     if len(downside) == 0:
         return float('inf')
-    dd = math.sqrt(float(np.mean(downside ** 2)))  # not ddof=1 — Sortino convention
+    dd = math.sqrt(float(np.mean(np.minimum(excess, 0.0) ** 2)))  # downside deviation over all periods
     if dd < _FLOAT_NOISE:
         return 0.0
     return float((excess.mean() * periods) / (dd * math.sqrt(periods)))
@@ -298,7 +298,8 @@ class TestSrcQuantCoreParity:
         r_half = compute_portfolio_returns({rebal: w_half}, rets, rf_annual=0.0)
         # full is invested at 100%, half is at 50% (other 50% earns 0 RFR)
         assert r_full.mean() == pytest.approx(0.01, rel=1e-9)
-        assert r_half.mean() == pytest.approx(0.005, rel=1e-9)
+        assert r_half.iloc[0] == pytest.approx(0.005, rel=1e-9)
+        assert (1 + r_half).prod() == pytest.approx(0.5 * 1.01 ** len(r_half) + 0.5)
         assert r_full.mean() != r_half.mean()  # the bug fix proof
 
 
@@ -415,7 +416,7 @@ class TestShortsEnabled:
                                      slippage_coef=0.0,
                                      rf_annual=0.0)
         # daily = 1.2 * 0.02 + (-0.2) * (-0.01) = 0.024 + 0.002 = 0.026
-        assert r.mean() == pytest.approx(0.026, rel=1e-9)
+        assert r.iloc[0] == pytest.approx(0.026, rel=1e-9)
 
     def test_short_leg_counts_toward_turnover(self):
         """Going from (1.2, -0.2) to (0.8, 0.2) is |Δ|=0.4+0.4=0.8 turnover,
@@ -436,3 +437,49 @@ class TestShortsEnabled:
                                      slippage_coef=0.0,
                                      rf_annual=0.0)
         assert r.sum() == pytest.approx(-0.8 * TC, rel=1e-9)
+
+
+def test_calendar_month_end_includes_first_trading_day():
+    from src.quant_core import compute_portfolio_returns
+    idx = pd.to_datetime(['2021-02-01', '2021-02-02'])
+    returns = pd.DataFrame({'A': [0.01, 0.02]}, index=idx)
+    weights = {pd.Timestamp('2021-01-31'): pd.Series({'A': 1.0})}
+    result = compute_portfolio_returns(weights, returns, rf_annual=0.0)
+    assert result.index.tolist() == idx.tolist()
+    assert result.iloc[0] == pytest.approx(0.01)
+
+
+def test_rebalance_cost_uses_drifted_holdings():
+    from src.quant_core import compute_portfolio_returns
+    dates = pd.date_range('2024-01-01', periods=3, freq='D', name='Date')
+    returns = pd.DataFrame({'A': [0.0, 1.0, 0.0], 'B': [0.0, 0.0, 0.0]}, index=dates)
+    target = pd.Series({'A': 0.5, 'B': 0.5})
+    result = compute_portfolio_returns({dates[0]: target, dates[1]: target}, returns,
+                                       transaction_cost=0.01, rf_annual=0.0)
+    # After the first day weights drift to 2/3 and 1/3, so turnover is 1/3.
+    assert result.loc[dates[2]] == pytest.approx(-0.01 / 3)
+    assert result.index.name == 'Date'
+
+
+def test_daily_attribution_reconciles_after_costs():
+    from src.quant_core import compute_portfolio_returns
+    dates = pd.date_range('2024-01-01', periods=4, freq='D', name='Date')
+    returns = pd.DataFrame({'A': [0, .2, -.1, .05], 'B': [0, -.1, .05, .01]}, index=dates)
+    weights = {dates[0]: pd.Series({'A': .5, 'B': .2}),
+               dates[2]: pd.Series({'A': .1, 'B': .6})}
+    result, detail = compute_portfolio_returns(weights, returns, transaction_cost=.005,
+                                               slippage_coef=.002, return_details=True)
+    np.testing.assert_allclose(detail.sum(axis=1).values, result.values, atol=1e-12)
+    assert (detail['Trading costs'] <= 0).all()
+
+
+def test_first_day_loss_counts_as_drawdown():
+    from src.quant_core import portfolio_metrics
+    assert portfolio_metrics([-0.1, 0.0, 0.05], rf_annual=0.0)['max_dd'] == pytest.approx(-0.1)
+
+
+def test_sortino_downside_deviation_includes_non_loss_periods():
+    from src.quant_core import annualized_sortino
+    r = np.array([-.02, .04])
+    expected = (r.mean() * 252) / (np.sqrt((.02 ** 2) / 2) * np.sqrt(252))
+    assert annualized_sortino(r, rf_annual=0.0) == pytest.approx(expected)

@@ -76,7 +76,7 @@ def annualized_sortino(
     downside = excess[excess < 0]
     if len(downside) == 0:
         return float("inf")
-    dd = math.sqrt(float(np.mean(downside ** 2)))
+    dd = math.sqrt(float(np.mean(np.minimum(excess, 0.0) ** 2)))
     if dd < _FLOAT_NOISE:
         return 0.0
     return float((excess.mean() * periods) / (dd * math.sqrt(periods)))
@@ -112,7 +112,7 @@ def annualized_calmar(
     if r.size == 0:
         return 0.0
     if equity_curve is None:
-        equity_curve = np.cumprod(1.0 + r)
+        equity_curve = np.r_[1.0, np.cumprod(1.0 + r)]
     mdd = abs(max_drawdown(equity_curve))
     if mdd < _FLOAT_NOISE:
         return float("inf")
@@ -137,7 +137,7 @@ def portfolio_metrics(
     ann_vol    = float(r.std(ddof=1) * math.sqrt(periods))
     sharpe     = annualized_sharpe(r, rf_annual=rf_annual, periods=periods)
     sortino    = annualized_sortino(r, rf_annual=rf_annual, periods=periods)
-    cum = np.cumprod(1.0 + r)
+    cum = np.r_[1.0, np.cumprod(1.0 + r)]
     mdd = max_drawdown(cum)
     if mdd is not None and abs(mdd) > _FLOAT_NOISE:
         calmar = ann_return / abs(mdd)
@@ -166,6 +166,7 @@ def compute_portfolio_returns(
     slippage_coef: float = 0.0,
     rf_annual: float = RISK_FREE_RATE,
     periods: int = TRADING_DAYS_PER_YEAR,
+    return_details: bool = False,
 ) -> pd.Series:
     """Step a portfolio through `returns_df` using the given rebalance plan.
 
@@ -185,48 +186,63 @@ def compute_portfolio_returns(
 
     Returns a daily-return Series.
     """
+    if returns_df.index.has_duplicates or not returns_df.index.is_monotonic_increasing:
+        raise ValueError("returns_df index must be sorted and unique")
     daily_rf = rf_annual / periods
-    dates = sorted(weights_dict.keys())
-    out: list[pd.Series] = []
-    prev_w: pd.Series | None = None
+    dates = sorted(pd.Timestamp(d) for d in weights_dict)
+    if not dates:
+        empty = pd.Series(dtype=float, index=pd.DatetimeIndex([], name=returns_df.index.name))
+        return (empty, pd.DataFrame(index=empty.index)) if return_details else empty
+    holdings = None
+    out = []
+    details = []
     for i, rebal in enumerate(dates):
-        w = weights_dict[rebal]
-        w_sum = float(w.sum())
-        if w_sum > 1.0 + 1e-9:
-            w = w / w_sum
-            cash_pct = 0.0
+        target = weights_dict[rebal].astype(float)
+        missing = target.index.difference(returns_df.columns)
+        if len(missing):
+            raise KeyError(f"weight tickers not in returns_df: {list(missing)}")
+        target = target.reindex(returns_df.columns, fill_value=0.0)
+        if not np.isfinite(target).all():
+            raise ValueError("weights must be finite")
+        if target.sum() > 1 + 1e-8:
+            raise ValueError("net asset weights cannot exceed 1")
+        if holdings is None:
+            cost = 0.0  # initial allocation is provided as starting capital
         else:
-            cash_pct = max(0.0, 1.0 - w_sum)
-        next_rebal = dates[i + 1] if i + 1 < len(dates) else returns_df.index[-1]
-
-        missing = [t for t in w.index if t not in returns_df.columns]
-        if missing:
-            raise KeyError(
-                f"compute_portfolio_returns: weight tickers not in returns_df "
-                f"on rebal date {rebal.date() if hasattr(rebal, 'date') else rebal}: "
-                f"{missing}. Align the weight Series to the returns universe "
-                f"(use .reindex(returns_df.columns).fillna(0)) before calling."
-            )
-
-        if prev_w is not None:
-            common = w.index.intersection(prev_w.index)
-            dw = (
-                w.reindex(common).fillna(0) - prev_w.reindex(common).fillna(0)
-            ).abs()
-            turnover = float(dw.sum())
-            impact = float((dw ** 1.5).sum())
-            cost = turnover * transaction_cost + impact * slippage_coef
-        else:
-            cost = 0.0
-
-        period = returns_df.loc[rebal:next_rebal, w.index].iloc[1:]
-        if len(period) > 0:
-            daily = period @ w
-            if cash_pct > 0:
-                daily = daily + cash_pct * daily_rf
-            daily.iloc[0] -= cost
-            out.append(daily)
-        prev_w = w.copy()
-    if out:
-        return pd.concat(out).sort_index()
-    return pd.Series(dtype=float)
+            dw = (target - holdings).abs()
+            cost = transaction_cost * dw.sum() + slippage_coef * (dw ** 1.5).sum()
+        if not np.isfinite(cost) or cost < 0 or cost >= 1:
+            raise ValueError("transaction costs must be finite and less than portfolio value")
+        cash = 1.0 - target.sum()
+        holdings = target.copy()
+        end = dates[i + 1] if i + 1 < len(dates) else returns_df.index[-1]
+        period = returns_df.loc[(returns_df.index > rebal) & (returns_df.index <= end)]
+        for j, (date, asset_returns) in enumerate(period.iterrows()):
+            if asset_returns.isna().any():
+                raise ValueError(f"missing asset returns on {date}")
+            gross = float(holdings @ asset_returns + cash * daily_rf)
+            effective_cost = float(cost) if j == 0 else 0.0
+            net = (1.0 - effective_cost) * (1.0 + gross) - 1.0
+            out.append((date, net))
+            contributions = holdings * asset_returns
+            contributions = contributions.copy()
+            contributions["Cash"] = cash * daily_rf
+            contributions["Trading costs"] = -effective_cost * (1.0 + gross)
+            details.append(contributions.rename(date))
+            # Deduct costs proportionally from wealth; relative holdings drift
+            # according to asset performance, not by resetting each day.
+            growth = 1.0 + gross
+            if growth <= 0:
+                raise ValueError(f"portfolio wealth is non-positive on {date}")
+            holdings = holdings * (1.0 + asset_returns) / growth
+            cash = cash * (1.0 + daily_rf) / growth
+    if not out:
+        empty = pd.Series(dtype=float, index=pd.DatetimeIndex([], name=returns_df.index.name))
+        return (empty, pd.DataFrame(index=empty.index)) if return_details else empty
+    result = pd.Series(dict(out), dtype=float).sort_index()
+    result.index.name = returns_df.index.name
+    if return_details:
+        detail_frame = pd.DataFrame(details)
+        detail_frame.index.name = returns_df.index.name
+        return result, detail_frame
+    return result
