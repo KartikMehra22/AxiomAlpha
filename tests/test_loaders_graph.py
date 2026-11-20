@@ -72,3 +72,23 @@ def test_load_graph_intelligence_smoke():
     df = load_graph_intelligence()
     assert isinstance(df, pd.DataFrame)
     assert len(df) > 0
+
+
+def test_mst_pagerank_does_not_treat_distance_as_strength():
+    import networkx as nx
+    from src.graph_engine import compute_centralities
+    graph = nx.Graph()
+    graph.add_edge('A', 'B', weight=0.1)
+    graph.add_edge('B', 'C', weight=1.9)
+    centrality = compute_centralities(graph)
+    # A and C have identical unweighted positions despite different distances.
+    assert centrality.loc['A', 'pagerank'] == pytest.approx(centrality.loc['C', 'pagerank'])
+
+
+def test_graph_assignments_keep_unique_ticker_identity():
+    from src.io.loaders import load_community_assignments, load_leader_follower, load_centrality_scores
+    centrality = load_centrality_scores()
+    for frame in (load_community_assignments(), load_leader_follower()):
+        assert 'ticker' in frame.columns
+        assert frame['ticker'].is_unique
+        assert set(frame['ticker']) == set(centrality.index)

@@ -58,7 +58,8 @@ def compute_centralities(graph) -> pd.DataFrame:
 
     deg = nx.degree_centrality(graph)
     bet = nx.betweenness_centrality(graph)
-    pr  = nx.pagerank(graph) if graph.number_of_edges() else {n: 0.0 for n in graph.nodes}
+    # MST edge weights are distances, not strengths; use unweighted PageRank.
+    pr  = nx.pagerank(graph, weight=None) if graph.number_of_edges() else {n: 0.0 for n in graph.nodes}
     try:
         ev = nx.eigenvector_centrality_numpy(graph)
     except Exception:
