@@ -265,14 +265,10 @@ def load_centrality_scores() -> pd.DataFrame:
 
 
 def load_community_assignments() -> pd.DataFrame:
-    """Per-ticker community labels.
-    Note: NB05 currently writes this without a ticker column header — the
-    first column is the index of community numbers (louvain, girvan_newman,
-    label_prop). TODO(NB05): add explicit 'ticker' column on next pipeline run.
-    """
+    """Per-ticker community labels with explicit ticker identifiers."""
     p = _require(PROC / 'community_assignments.csv',
                  producer_nb='NB05_graph_analysis')
-    return pd.read_csv(p)
+    return _validate(pd.read_csv(p), name='community_assignments', required_cols=['ticker'])
 
 
 def load_systemic_risk_scores() -> pd.DataFrame:
@@ -301,7 +297,7 @@ def load_granger_causality() -> pd.DataFrame:
 def load_leader_follower() -> pd.DataFrame:
     p = _require(PROC / 'leader_follower.csv',
                  producer_nb='NB05_graph_analysis')
-    return pd.read_csv(p)
+    return _validate(pd.read_csv(p), name='leader_follower', required_cols=['ticker'])
 
 
 def load_graph_intelligence() -> pd.DataFrame:
