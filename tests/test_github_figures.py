@@ -17,3 +17,12 @@ def test_notebook_previews_match_generated_images():
         for cell, filename in zip(previews, filenames):
             png = base64.b64decode(cell['outputs'][0]['data']['image/png'])
             assert png == (root / 'docs' / 'figures' / filename).read_bytes()
+
+
+def test_graph_analysis_risk_plot_is_saved_in_its_cell():
+    root = Path(__file__).resolve().parents[1]
+    path = root / 'notebooks/05_graph_analysis/05_graph_analysis.ipynb'
+    notebook = json.loads(path.read_text())
+    cells = [c for c in notebook['cells'] if 'fig_traditional_vs_network_risk.png' in ''.join(c.get('source', []))]
+    assert len(cells) == 1
+    assert any('image/png' in output.get('data', {}) for output in cells[0].get('outputs', []))
