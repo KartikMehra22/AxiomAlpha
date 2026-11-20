@@ -43,7 +43,7 @@ def compute_log_returns(prices: pd.DataFrame) -> pd.DataFrame:
 
 def compute_simple_returns(prices: pd.DataFrame) -> pd.DataFrame:
     """Daily simple returns (P_t / P_{t-1} - 1) from a wide price DataFrame."""
-    return prices.pct_change().dropna(how="all")
+    return prices.pct_change(fill_method=None).dropna(how="all")
 
 
 def rolling_volatility(
@@ -59,12 +59,17 @@ def rolling_momentum(returns: pd.DataFrame, window: int) -> pd.DataFrame:
 
 
 def rolling_drawdown(returns: pd.DataFrame, window: int = 60) -> pd.DataFrame:
-    """Rolling max-drawdown computed inside a window of `window` days.
+    """Current drawdown from the rolling peak, given daily log returns.
 
-    Per ticker: cumulative product, rolling max, percentage off.
+    The initial unit price is included while it falls inside the window.
+    This is the current drawdown, not the maximum drawdown within the window.
     """
-    cum = (1.0 + returns).cumprod()
+    if window < 1:
+        raise ValueError("window must be positive")
+    cum = np.exp(returns.cumsum())
     peak = cum.rolling(window, min_periods=1).max()
+    if window > 1:
+        peak.iloc[:window - 1] = peak.iloc[:window - 1].clip(lower=1.0)
     return (cum - peak) / peak
 
 

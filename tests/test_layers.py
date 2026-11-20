@@ -235,3 +235,16 @@ class TestNLPLayer:
         })
         ic = information_coefficient(sent_df, log_returns, lag=1)
         assert abs(ic) < 0.20  # generously loose for n=200
+
+
+def test_drawdown_from_log_returns_includes_initial_price():
+    prices = pd.DataFrame({'A': [100.0, 80.0, 96.0]})
+    log_returns = compute_log_returns(prices)
+    drawdown = rolling_drawdown(log_returns, window=3)
+    assert drawdown['A'].iloc[0] == pytest.approx(-0.2)
+    assert drawdown['A'].iloc[1] == pytest.approx(-0.04)
+
+
+def test_simple_returns_do_not_impute_missing_prices():
+    prices = pd.DataFrame({'A': [100.0, np.nan, 110.0]})
+    assert compute_simple_returns(prices).empty
