@@ -2,6 +2,34 @@
 
 AxiomAlpha is an experimental quantitative-research pipeline for historical US equity data. It combines price and market-network features, walk-forward machine-learning predictions, portfolio construction and a monthly backtest. It is not a live trading system or evidence of future performance.
 
+## Project graphs
+
+These figures are generated from the saved historical pipeline artifacts. The backtest is exploratory; synthetic sentiment is not real-news alpha.
+
+### Stock correlation network
+
+![Stock correlation network](docs/figures/stock_network.png)
+
+### Rolling network correlation
+
+![Rolling network correlation](docs/figures/network_correlation.png)
+
+### Walk-forward model signals
+
+![Walk-forward model probabilities](docs/figures/ml_probabilities.png)
+
+### Portfolio backtest
+
+![Historical portfolio value](docs/figures/backtest_equity.png)
+
+![Historical portfolio drawdown](docs/figures/backtest_drawdown.png)
+
+### Synthetic-news diagnostic
+
+![Synthetic sentiment correlation](docs/figures/synthetic_sentiment.png)
+
+Graph previews also appear inside notebooks 04, 07, 10 and 12. To refresh these previews after rerunning the pipeline, run `python scripts/render_github_figures.py`. Older exploratory figures are available in [`data/outputs`](data/outputs/) and may reflect previous runs.
+
 ## Research flow
 
 1. Notebooks 01–05 ingest prices and macro series, construct returns and features, and build rolling correlation networks.
