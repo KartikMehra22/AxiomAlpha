@@ -1,0 +1,89 @@
+{
+  "status": "development_only_not_holdout",
+  "source": "/Users/kartikmehra/Documents/Codex/2026-11-19/new-chat/axiom-publish/data/raw/prices.csv",
+  "sha256": "446483c93d9c590d2349b25714d212fc7e66d9d9e1d6d1e110499edc9475a321",
+  "price_start": "2019-01-02",
+  "price_end": "2024-12-30",
+  "stocks": [
+    "AAPL",
+    "ABBV",
+    "AMZN",
+    "BA",
+    "BAC",
+    "CAT",
+    "COP",
+    "CVX",
+    "EOG",
+    "GE",
+    "GOOGL",
+    "GS",
+    "HD",
+    "JNJ",
+    "JPM",
+    "MCD",
+    "META",
+    "MMM",
+    "MRK",
+    "MS",
+    "MSFT",
+    "NKE",
+    "NVDA",
+    "PFE",
+    "SLB",
+    "TSLA",
+    "UNH",
+    "UPS",
+    "WFC",
+    "XOM"
+  ],
+  "market_proxy": "daily equal-weight rebalanced arithmetic stock return, converted with log1p",
+  "train_end": "2021-12-31",
+  "validation_start": "2022-01-01",
+  "validation_end": "2022-12-31",
+  "train_n": 677,
+  "validation_n": 231,
+  "threshold_train_only": 0.0156574257382859,
+  "train_positive": 136,
+  "validation_positive": 91,
+  "train_prevalence": 0.20088626292466766,
+  "validation_prevalence": 0.3939393939393939,
+  "feature_sets": {
+    "volatility": [
+      "vol_5",
+      "vol_20",
+      "vol_60",
+      "return_20"
+    ],
+    "volatility_and_correlation": [
+      "vol_5",
+      "vol_20",
+      "vol_60",
+      "return_20",
+      "avg_correlation_60"
+    ]
+  },
+  "metrics": {
+    "historical_prevalence": {
+      "brier": 0.27602065923664604,
+      "average_precision": 0.3939393939393939,
+      "roc_auc": 0.5
+    },
+    "volatility": {
+      "brier": 0.26281926522361826,
+      "average_precision": 0.4631639476003881,
+      "roc_auc": 0.604552590266876
+    },
+    "volatility_and_correlation": {
+      "brier": 0.27572099933174493,
+      "average_precision": 0.4154102315783761,
+      "roc_auc": 0.5754317111459969
+    }
+  },
+  "caveats": [
+    "Pilot only; selected 30-stock universe, not point-in-time.",
+    "Equal-weight proxy overlaps the model stock universe.",
+    "Validation window has been inspected; it is not a final holdout.",
+    "Threshold fitted to matured training labels; no tuning or calibration performed.",
+    "No causal, neural-graph or investment claim."
+  ]
+}
