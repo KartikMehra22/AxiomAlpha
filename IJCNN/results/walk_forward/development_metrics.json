@@ -1,0 +1,192 @@
+{
+  "status": "exploratory_development_not_untouched_holdout",
+  "input_sha256": "446483c93d9c590d2349b25714d212fc7e66d9d9e1d6d1e110499edc9475a321",
+  "training": "expanding annual; labels mature before each evaluation year; no tuning",
+  "target": "20-trading-day future RMS of equal-weight proxy log returns > training-fold 80th percentile",
+  "notes": [
+    "Annual evaluation labels must mature within their calendar year; boundary observations are omitted.",
+    "Threshold changes between folds; AP depends on prevalence; do not pool fold labels as one fixed event.",
+    "Block-bootstrap intervals are exploratory within-fold sensitivity summaries, not confirmation; overlap and few events limit inference.",
+    "All years are development data; no independent holdout, graph or neural model.",
+    "Fixed selected stock universe; no point-in-time constituent, availability or economic-value claim."
+  ],
+  "runtime": {
+    "python": "3.13.5",
+    "numpy": "1.26.4",
+    "pandas": "2.2.3",
+    "scikit_learn": "1.6.1"
+  },
+  "folds": [
+    {
+      "year": 2022,
+      "train_n": 677,
+      "evaluation_n": 231,
+      "last_training_label": "2021-12-31",
+      "first_evaluation_origin": "2022-01-03",
+      "last_evaluation_label": "2022-12-30",
+      "stress_threshold": 0.0156574257382859,
+      "train_prevalence": 0.20088626292466766,
+      "evaluation_prevalence": 0.3939393939393939,
+      "positive_days": 91,
+      "positive_runs_not_independent_episodes": 9,
+      "metrics": {
+        "prevalence": {
+          "average_precision": 0.3939393939393939,
+          "roc_auc": 0.5,
+          "brier": 0.27602065923664604
+        },
+        "logistic_volatility": {
+          "average_precision": 0.4631639476003881,
+          "roc_auc": 0.604552590266876,
+          "brier": 0.26281926522361826
+        },
+        "logistic_volatility_correlation": {
+          "average_precision": 0.4154102315783761,
+          "roc_auc": 0.5754317111459969,
+          "brier": 0.27572099933174493
+        },
+        "boosted_volatility": {
+          "average_precision": 0.40403661280537406,
+          "roc_auc": 0.5586342229199371,
+          "brier": 0.35834227954042436
+        },
+        "boosted_volatility_correlation": {
+          "average_precision": 0.5812720013986656,
+          "roc_auc": 0.7431711145996861,
+          "brier": 0.301944506834109
+        }
+      },
+      "bootstrap_logistic_correlation_minus_volatility": {
+        "block_length": 25,
+        "repetitions": 1000,
+        "seed": 173,
+        "ap_a_minus_b": {
+          "valid_replicates": 1000,
+          "interval_95": [
+            -0.11569418850213983,
+            0.024276145281780077
+          ]
+        },
+        "brier_a_minus_b": {
+          "valid_replicates": 1000,
+          "interval_95": [
+            -0.0037935227843948773,
+            0.03299787817540912
+          ]
+        }
+      }
+    },
+    {
+      "year": 2023,
+      "train_n": 928,
+      "evaluation_n": 230,
+      "last_training_label": "2022-12-30",
+      "first_evaluation_origin": "2023-01-03",
+      "last_evaluation_label": "2023-12-29",
+      "stress_threshold": 0.016712197416483703,
+      "train_prevalence": 0.20043103448275862,
+      "evaluation_prevalence": 0.0,
+      "positive_days": 0,
+      "positive_runs_not_independent_episodes": 0,
+      "metrics": {
+        "prevalence": {
+          "average_precision": null,
+          "roc_auc": null,
+          "brier": 0.04017259958382878
+        },
+        "logistic_volatility": {
+          "average_precision": null,
+          "roc_auc": null,
+          "brier": 0.006670401721434072
+        },
+        "logistic_volatility_correlation": {
+          "average_precision": null,
+          "roc_auc": null,
+          "brier": 0.007312348148151935
+        },
+        "boosted_volatility": {
+          "average_precision": null,
+          "roc_auc": null,
+          "brier": 0.035832610949902595
+        },
+        "boosted_volatility_correlation": {
+          "average_precision": null,
+          "roc_auc": null,
+          "brier": 0.025120729480224795
+        }
+      },
+      "bootstrap_logistic_correlation_minus_volatility": {
+        "block_length": 25,
+        "repetitions": 1000,
+        "seed": 173,
+        "ap_a_minus_b": {
+          "valid_replicates": 0,
+          "interval_95": null
+        },
+        "brier_a_minus_b": {
+          "valid_replicates": 1000,
+          "interval_95": [
+            3.2042421268951034e-05,
+            0.002035260478849012
+          ]
+        }
+      }
+    },
+    {
+      "year": 2024,
+      "train_n": 1178,
+      "evaluation_n": 231,
+      "last_training_label": "2023-12-29",
+      "first_evaluation_origin": "2024-01-02",
+      "last_evaluation_label": "2024-12-30",
+      "stress_threshold": 0.015483183021555614,
+      "train_prevalence": 0.200339558573854,
+      "evaluation_prevalence": 0.0,
+      "positive_days": 0,
+      "positive_runs_not_independent_episodes": 0,
+      "metrics": {
+        "prevalence": {
+          "average_precision": null,
+          "roc_auc": null,
+          "brier": 0.04013593872956667
+        },
+        "logistic_volatility": {
+          "average_precision": null,
+          "roc_auc": null,
+          "brier": 0.003245788191121888
+        },
+        "logistic_volatility_correlation": {
+          "average_precision": null,
+          "roc_auc": null,
+          "brier": 0.0026267403428230206
+        },
+        "boosted_volatility": {
+          "average_precision": null,
+          "roc_auc": null,
+          "brier": 0.011902979105229524
+        },
+        "boosted_volatility_correlation": {
+          "average_precision": null,
+          "roc_auc": null,
+          "brier": 0.0001877322176512745
+        }
+      },
+      "bootstrap_logistic_correlation_minus_volatility": {
+        "block_length": 25,
+        "repetitions": 1000,
+        "seed": 173,
+        "ap_a_minus_b": {
+          "valid_replicates": 0,
+          "interval_95": null
+        },
+        "brier_a_minus_b": {
+          "valid_replicates": 1000,
+          "interval_95": [
+            -0.001051991989892113,
+            -0.0002824903748690324
+          ]
+        }
+      }
+    }
+  ]
+}
